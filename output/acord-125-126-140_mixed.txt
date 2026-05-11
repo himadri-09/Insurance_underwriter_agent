@@ -1,0 +1,2630 @@
+# Mixed extraction
+
+Source: acord-125-126-140.pdf
+
+
+---
+
+## Plain text layer (PyMuPDF)
+
+# PyMuPDF extraction
+
+Source: acord-125-126-140.pdf
+
+
+## Page 1
+
+NAME (Other Named Insured) AND MAILING ADDRESS (including ZIP+4)
+NAICS
+BUSINESS PHONE #:
+TRUST
+AND MANAGERS:
+SUBCHAPTER "S" CORPORATION
+NO. OF MEMBERS
+NOT FOR PROFIT ORG
+JOINT VENTURE
+CORPORATION
+PARTNERSHIP
+INDIVIDUAL
+LLC
+WEBSITE ADDRESS
+SIC
+GL CODE
+FEIN OR SOC SEC #
+NAME (Other Named Insured) AND MAILING ADDRESS (including ZIP+4)
+NAICS
+BUSINESS PHONE #:
+TRUST
+AND MANAGERS:
+SUBCHAPTER "S" CORPORATION
+NO. OF MEMBERS
+NOT FOR PROFIT ORG
+JOINT VENTURE
+CORPORATION
+PARTNERSHIP
+INDIVIDUAL
+LLC
+WEBSITE ADDRESS
+SIC
+GL CODE
+FEIN OR SOC SEC #
+VEHICLE SCHEDULE
+VACANT BUILDING SUPPLEMENT
+STATE SUPPLEMENT (If applicable)
+STATEMENT / SCHEDULE OF VALUES
+RESTAURANT / TAVERN SUPPLEMENT
+PROFESSIONAL LIABILITY SUPPLEMENT
+PREMIUM PAYMENT SUPPLEMENT
+LOSS SUMMARY
+INTERNATIONAL PROPERTY EXPOSURE SUPPLEMENT
+INTERNATIONAL LIABILITY EXPOSURE SUPPLEMENT
+ADDITIONAL INTEREST SCHEDULE
+ATTACHMENTS
+CONTRACTORS SUPPLEMENT
+CONDO ASSN BYLAWS (for D&O Coverage only)
+APARTMENT BUILDING SUPPLEMENT
+ADDITIONAL PREMISES INFORMATION SCHEDULE
+COVERAGES SCHEDULE
+DRIVER INFORMATION SCHEDULE
+NAME (First Named Insured) AND MAILING ADDRESS (including ZIP+4)
+NAICS
+BUSINESS PHONE #:
+TRUST
+AND MANAGERS:
+SUBCHAPTER "S" CORPORATION
+NO. OF MEMBERS
+NOT FOR PROFIT ORG
+JOINT VENTURE
+CORPORATION
+PARTNERSHIP
+INDIVIDUAL
+LLC
+WEBSITE ADDRESS
+SIC
+GL CODE
+FEIN OR SOC SEC #
+ACORD 125 (2016/03)
+$
+$
+METHOD OF PAYMENT
+PREMIUM
+MINIMUM
+$
+DEPOSIT
+POLICY PREMIUM
+AUDIT
+PAYMENT PLAN
+BILLING PLAN
+DIRECT
+AGENCY
+PROPOSED EXP DATE
+PROPOSED EFF DATE
+POLICY INFORMATION
+LINES OF BUSINESS
+COMMERCIAL GENERAL LIABILITY
+$
+$
+$
+$
+$
+$
+$
+$
+$
+$
+$
+$
+$
+PREMIUM
+PREMIUM
+PREMIUM
+BUSINESS OWNERS
+BUSINESS AUTO
+UMBRELLA
+BOILER & MACHINERY
+GARAGE AND DEALERS
+CRIME
+COMMERCIAL PROPERTY
+INDICATE LINES OF BUSINESS
+YACHT
+© 1993-2015 ACORD CORPORATION.  All rights reserved.
+Page 1 of 4
+The ACORD name and logo are registered marks of ACORD
+APPLICANT INFORMATION
+UNDERWRITER OFFICE
+UNDERWRITER
+DATE (MM/DD/YYYY)
+COMMERCIAL INSURANCE APPLICATION
+APPLICANT INFORMATION SECTION
+FAX
+(A/C, No):
+AGENCY
+NAME:
+CONTACT
+(A/C, No, Ext):
+PHONE
+SUBCODE:
+CODE:
+AGENCY CUSTOMER ID:
+ADDRESS:
+E-MAIL
+STATUS OF
+TRANSACTION
+RENEW
+QUOTE
+ISSUE POLICY
+BOUND (Give Date and/or Attach Copy):
+CANCEL
+CHANGE
+DATE
+TIME
+AM
+PM
+NAIC CODE
+CARRIER
+POLICY NUMBER
+COMPANY POLICY OR PROGRAM NAME
+PROGRAM CODE
+HOTEL / MOTEL SUPPLEMENT
+CYBER AND PRIVACY
+FIDUCIARY LIABILITY
+$
+LIQUOR LIABILITY
+$
+COMMERCIAL INLAND MARINE
+$
+TRUCKERS
+MOTOR CARRIER
+$
+ACCOUNTS RECEIVABLE / VALUABLE PAPERS
+DEALERS SECTION
+ELECTRONIC DATA PROCESSING SECTION
+GLASS AND SIGN SECTION
+INSTALLATION / BUILDERS RISK SECTION
+OPEN CARGO SECTION
+$
+$
+$
+$
+
+
+## Page 2
+
+E-MAIL ADDRESS:
+REASON FOR INTEREST:
+OWNER
+LEASEBACK
+WARRANTY
+BREACH OF
+TRUSTEE
+REGISTRANT
+FAX (A/C, No):
+PHONE (A/C, No, Ext):
+LIEN AMOUNT:
+INTEREST END DATE:
+ITEM:
+CLASS:
+AIRPORT:
+AIRCRAFT:
+CO-OWNER
+OWNER
+SEND BILL
+POLICY
+EVIDENCE:
+AS LESSOR
+INSURED
+ITEM DESCRIPTION
+INTEREST
+RANK:
+NAME AND ADDRESS
+REFERENCE / LOAN #:
+CERTIFICATE
+INTEREST IN ITEM NUMBER
+ADDITIONAL
+LOSS PAYEE
+MORTGAGEE
+LIENHOLDER
+EMPLOYEE
+LOCATION:
+BUILDING:
+VEHICLE:
+BOAT:
+ITEM
+$
+SQ FT
+ANY AREA LEASED TO OTHERS? Y / N
+TOTAL BUILDING AREA:
+SQ FT
+OPEN TO PUBLIC AREA:
+ANNUAL REVENUES:
+INTEREST
+CITY LIMITS
+OCCUPIED AREA:
+SQ FT
+BLD #
+LOC #
+DESCRIPTION OF OPERATIONS:
+ZIP:
+STATE:
+COUNTY:
+CITY:
+STREET
+# PART TIME EMPL
+# FULL TIME EMPL
+INSIDE
+OUTSIDE
+OWNER
+TENANT
+$
+SQ FT
+ANY AREA LEASED TO OTHERS? Y / N
+TOTAL BUILDING AREA:
+SQ FT
+OPEN TO PUBLIC AREA:
+ANNUAL REVENUES:
+INTEREST
+CITY LIMITS
+OCCUPIED AREA:
+SQ FT
+BLD #
+LOC #
+DESCRIPTION OF OPERATIONS:
+ZIP:
+STATE:
+COUNTY:
+CITY:
+STREET
+# PART TIME EMPL
+# FULL TIME EMPL
+INSIDE
+OUTSIDE
+OWNER
+TENANT
+$
+SQ FT
+ANY AREA LEASED TO OTHERS? Y / N
+TOTAL BUILDING AREA:
+SQ FT
+OPEN TO PUBLIC AREA:
+ANNUAL REVENUES:
+INTEREST
+CITY LIMITS
+OCCUPIED AREA:
+SQ FT
+BLD #
+LOC #
+DESCRIPTION OF OPERATIONS:
+ZIP:
+STATE:
+COUNTY:
+CITY:
+STREET
+# PART TIME EMPL
+# FULL TIME EMPL
+INSIDE
+OUTSIDE
+OWNER
+TENANT
+ADDITIONAL INTEREST (Not all fields apply to all scenarios - provide only the necessary data)  Attach ACORD 45 for more Additional Interests
+PHONE #
+SECONDARY
+CELL
+HOME
+BUS
+PHONE #
+CELL
+HOME
+BUS
+PRIMARY
+PHONE #
+SECONDARY
+CELL
+HOME
+BUS
+PHONE #
+CELL
+HOME
+BUS
+PRIMARY
+$
+SQ FT
+ANY AREA LEASED TO OTHERS? Y / N
+TOTAL BUILDING AREA:
+SQ FT
+OPEN TO PUBLIC AREA:
+ANNUAL REVENUES:
+INTEREST
+CITY LIMITS
+OCCUPIED AREA:
+SQ FT
+BLD #
+LOC #
+DESCRIPTION OF OPERATIONS:
+ZIP:
+STATE:
+COUNTY:
+CITY:
+STREET
+# PART TIME EMPL
+# FULL TIME EMPL
+INSIDE
+OUTSIDE
+OWNER
+TENANT
+%
+%
+DESCRIPTION OF OPERATIONS OF OTHER NAMED INSUREDS
+OFF PREMISES INSTALLATION, SERVICE OR REPAIR WORK
+DESCRIPTION OF PRIMARY OPERATIONS
+RETAIL STORES OR SERVICE OPERATIONS % OF TOTAL SALES:
+INSTALLATION, SERVICE OR REPAIR WORK
+NATURE OF BUSINESS
+MANUFACTURING
+INSTITUTIONAL
+DATE BUSINESS
+STARTED (MM/DD/YYYY)
+CONTRACTOR
+RESTAURANT
+CONDOMINIUMS
+APARTMENTS
+WHOLESALE
+RETAIL
+SERVICE
+OFFICE
+PREMISES INFORMATION  (Attach ACORD 823 for Additional Premises)
+CONTACT NAME:
+SECONDARY E-MAIL ADDRESS:
+PRIMARY E-MAIL ADDRESS:
+CONTACT TYPE:
+CONTACT INFORMATION
+SECONDARY E-MAIL ADDRESS:
+PRIMARY E-MAIL ADDRESS:
+CONTACT NAME:
+CONTACT TYPE:
+AGENCY CUSTOMER ID:
+ACORD 125 (2016/03)
+LENDER'S
+LOSS PAYABLE
+Page 2 of 4
+
+
+## Page 3
+
+$
+$
+$
+$
+EFFECTIVE DATE
+YEAR
+EXPIRATION DATE
+PREMIUM
+POLICY NUMBER
+CARRIER
+OTHER:
+PROPERTY
+AUTOMOBILE
+GENERAL LIABILITY
+CATEGORY
+PRIOR CARRIER INFORMATION
+REMARKS / PROCESSING INSTRUCTIONS (ACORD 101, Additional Remarks Schedule, may be attached if more space is required)
+13. DOES APPLICANT HAVE OTHER BUSINESS VENTURES FOR WHICH COVERAGE IS NOT REQUESTED?
+3.
+ANY EXPOSURE TO FLAMMABLES, EXPLOSIVES, CHEMICALS?
+SAFETY POSITION
+OSHA
+MONTHLY MEETINGS
+SAFETY MANUAL
+2.
+IS A FORMAL SAFETY PROGRAM IN OPERATION?
+Y / N
+EXPLAIN ALL "YES" RESPONSES
+SUBSIDIARY COMPANY NAME
+RELATIONSHIP DESCRIPTION
+% OWNED
+PARENT COMPANY NAME
+RELATIONSHIP DESCRIPTION
+% OWNED
+DOES THE APPLICANT HAVE ANY SUBSIDIARIES?
+IS THE APPLICANT A SUBSIDIARY OF ANOTHER ENTITY ?
+1a.
+1b.
+4.
+ANY OTHER INSURANCE WITH THIS COMPANY?  (List policy numbers)
+POLICY NUMBER
+POLICY NUMBER
+LINE OF BUSINESS
+LINE OF BUSINESS
+NAME OF TRUST:
+HAS BUSINESS BEEN PLACED IN A TRUST?
+11.
+HAS APPLICANT HAD A JUDGEMENT OR LIEN DURING THE LAST FIVE (5) YEARS?
+10.
+HAS APPLICANT HAD A FORECLOSURE, REPOSSESSION, BANKRUPTCY OR FILED FOR BANKRUPTCY DURING THE LAST FIVE (5) YEARS?
+9.
+CONDITION CORRECTED (Describe):
+UNDERWRITING
+AGENT NO LONGER REPRESENTS CARRIER
+NON-RENEWAL
+NON-PAYMENT
+ANY POLICY OR COVERAGE DECLINED, CANCELLED OR NON-RENEWED DURING THE PRIOR THREE (3) YEARS FOR ANY PREMISES OR
+OPERATIONS?  (Missouri Applicants - Do not answer this question)
+5.
+GENERAL INFORMATION
+ANY PAST LOSSES OR CLAIMS RELATING TO SEXUAL ABUSE OR MOLESTATION ALLEGATIONS, DISCRIMINATION OR NEGLIGENT HIRING?
+6.
+DURING THE LAST FIVE YEARS (TEN IN RI), HAS ANY APPLICANT BEEN INDICTED FOR OR CONVICTED OF ANY DEGREE OF THE CRIME OF FRAUD,
+BRIBERY, ARSON OR ANY OTHER ARSON-RELATED CRIME IN CONNECTION WITH THIS OR ANY OTHER PROPERTY?
+(In RI, this question must be answered by any applicant for property insurance.  Failure to disclose the existence of an arson conviction is a misdemeanor punishable
+by a sentence of up to one year of imprisonment).
+7.
+RESOLUTION
+RESOLVE DATE
+EXPLANATION
+OCCUR DATE
+ANY UNCORRECTED FIRE AND/OR SAFETY CODE VIOLATIONS?
+8.
+ANY FOREIGN OPERATIONS, FOREIGN PRODUCTS DISTRIBUTED IN USA, OR US PRODUCTS SOLD / DISTRIBUTED IN FOREIGN COUNTRIES?
+(If "YES", attach ACORD 815 for Liability Exposure and/or ACORD 816 for Property Exposure)
+12.
+AGENCY CUSTOMER ID:
+Page 3 of 4
+ACORD 125 (2016/03)
+OCCUR DATE
+EXPLANATION
+RESOLUTION
+RESOLVE DATE
+OCCUR DATE
+EXPLANATION
+RESOLUTION
+RESOLVE DATE
+DOES APPLICANT OWN / LEASE / OPERATE ANY DRONES?  (If "YES", describe use)
+14.
+15. DOES APPLICANT HIRE OTHERS TO OPERATE DRONES?  (If "YES", describe use)
+
+
+## Page 4
+
+Applicable in OR:  Any person who knowingly and with intent to defraud or solicit another to defraud the insurer by submitting an application containing a
+false statement as to any material fact may be violating state law.
+Applicable in NJ:  Any person who includes any false or misleading information on an application for an insurance policy is subject to criminal and civil
+penalties.
+Applicable in KY, NY, OH and PA:  Any person who knowingly and with intent to defraud any insurance company or other person files an application for
+insurance or statement of claim containing any materially false information or conceals for the purpose of misleading, information concerning any fact material
+thereto commits a fraudulent insurance act, which is a crime and subjects such person to criminal and civil penalties (not to exceed five thousand dollars and
+the stated value of the claim for each such violation)*. *Applies in NY Only.
+(Not applicable in AZ, CA, DE, KS, MA, MN, ND, NY, OR, VA, or WV.  Specific ACORD 38s are available for applicants in these states.)
+(Applicant's Initials):
+PERSONAL INFORMATION ABOUT YOU, INCLUDING INFORMATION FROM A CREDIT OR OTHER INVESTIGATIVE REPORT, MAY BE COLLECTED FROM PERSONS
+OTHER THAN YOU IN CONNECTION WITH THIS APPLICATION FOR INSURANCE AND SUBSEQUENT AMENDMENTS AND RENEWALS.  SUCH INFORMATION AS WELL AS
+OTHER PERSONAL AND PRIVILEGED INFORMATION COLLECTED BY US OR OUR AGENTS MAY IN CERTAIN CIRCUMSTANCES BE DISCLOSED TO THIRD PARTIES
+WITHOUT YOUR AUTHORIZATION.  CREDIT SCORING INFORMATION MAY BE USED TO HELP DETERMINE EITHER YOUR ELIGIBILITY FOR INSURANCE OR THE
+PREMIUM YOU WILL BE CHARGED.  WE MAY USE A THIRD PARTY IN CONNECTION WITH THE DEVELOPMENT OF YOUR SCORE.  YOU MAY HAVE THE RIGHT TO
+REVIEW YOUR PERSONAL INFORMATION IN OUR FILES AND REQUEST CORRECTION OF ANY INACCURACIES. YOU MAY ALSO HAVE THE RIGHT TO REQUEST IN
+WRITING THAT WE CONSIDER EXTRAORDINARY LIFE CIRCUMSTANCES IN CONNECTION WITH THE DEVELOPMENT OF YOUR CREDIT SCORE. THESE RIGHTS MAY
+BE LIMITED IN SOME STATES. PLEASE CONTACT YOUR AGENT OR BROKER TO LEARN HOW THESE RIGHTS MAY APPLY IN YOUR STATE OR FOR INSTRUCTIONS ON
+HOW TO SUBMIT A REQUEST TO US FOR A MORE DETAILED DESCRIPTION OF YOUR RIGHTS AND OUR PRACTICES REGARDING PERSONAL INFORMATION.
+Copy of the Notice of Information Practices (Privacy) has been given to the applicant. (Not required in all states, contact your agent or broker for your state's requirements.)
+Applicable in PR:  Any person who knowingly and with the intention of defrauding presents false information in an insurance application, or presents, helps,
+or causes the presentation of a fraudulent claim for the payment of a loss or any other benefit, or presents more than one claim for the same damage or loss,
+shall incur a felony and, upon conviction, shall be sanctioned for each violation by a fine of not less than five thousand dollars ($5,000) and not more than ten
+thousand dollars ($10,000), or a fixed term of imprisonment for three (3) years, or both penalties.  Should aggravating circumstances [be] present, the penalty
+thus established may be increased to a maximum of five (5) years, if extenuating circumstances are present, it may be reduced to a minimum of two (2)
+years.
+Applicable in ME, TN, VA and WA:  It is a crime to knowingly provide false, incomplete or misleading information to an insurance company for the purpose
+of defrauding the company.  Penalties (may)* include imprisonment, fines and denial of insurance benefits. *Applies in ME Only.
+Applicable in KS:  Any person who, knowingly and with intent to defraud, presents, causes to be presented or prepares with knowledge or belief that it will be
+presented to or by an insurer, purported insurer, broker or any agent thereof, any written statement as part of, or in support of, an application for the issuance
+of, or the rating of an insurance policy for personal or commercial insurance, or a claim for payment or other benefit pursuant to an insurance policy for
+commercial or personal insurance which such person knows to contain materially false information concerning any fact material thereto; or conceals, for the
+purpose of misleading, information concerning any fact material thereto commits a fraudulent insurance act.
+Applicable in FL and OK:  Any person who knowingly and with intent to injure, defraud, or deceive any insurer files a statement of claim or an application
+containing any false, incomplete, or misleading information is guilty of a felony (of the third degree)*. *Applies in FL Only.
+Applicable in CO:  It is unlawful to knowingly provide false, incomplete, or misleading facts or information to an insurance company for the purpose of
+defrauding or attempting to defraud the company.  Penalties may include imprisonment, fines, denial of insurance and civil damages.  Any insurance
+company or agent of an insurance company who knowingly provides false, incomplete, or misleading facts or information to a policyholder or claimant for the
+purpose of defrauding or attempting to defraud the policyholder or claimant with regard to a settlement or award payable from insurance proceeds shall be
+reported to the Colorado Division of Insurance within the Department of Regulatory Agencies.
+Applicable in AL, AR, DC, LA, MD, NM, RI and WV:  Any person who knowingly (or willfully)* presents a false or fraudulent claim for payment of a loss or
+benefit or knowingly (or willfully)* presents false information in an application for insurance is guilty of a crime and may be subject to fines and confinement in
+prison. *Applies in MD Only.
+SIGNATURE
+NATIONAL PRODUCER NUMBER
+(Required in Florida)
+PRODUCER'S SIGNATURE
+DATE
+APPLICANT'S SIGNATURE
+PRODUCER'S NAME (Please Print)
+STATE PRODUCER LICENSE NO
+THE UNDERSIGNED IS AN AUTHORIZED REPRESENTATIVE OF THE APPLICANT AND REPRESENTS THAT REASONABLE INQUIRY HAS BEEN MADE TO OBTAIN THE
+ANSWERS TO QUESTIONS ON THIS APPLICATION.  HE/SHE REPRESENTS THAT THE ANSWERS ARE TRUE, CORRECT AND COMPLETE TO THE BEST OF HIS/HER
+KNOWLEDGE.
+(Attach Loss Summary for Additional Loss Information)
+Check if none
+YEARS
+TOTAL LOSSES:  $
+DATE OF
+OCCURRENCE
+DATE OF CLAIM
+AMOUNT PAID
+SUBRO-
+GATION
+Y / N
+AMOUNT RESERVED
+CLAIM
+OPEN
+Y / N
+ENTER ALL CLAIMS OR LOSSES (REGARDLESS OF FAULT AND WHETHER OR NOT INSURED) OR OCCURRENCES THAT MAY GIVE RISE TO CLAIMS
+FOR THE LAST
+LINE
+TYPE / DESCRIPTION OF OCCURRENCE OR CLAIM
+LOSS HISTORY
+$
+$
+$
+$
+EFFECTIVE DATE
+EXPIRATION DATE
+PREMIUM
+POLICY NUMBER
+CARRIER
+$
+$
+$
+$
+EFFECTIVE DATE
+YEAR
+EXPIRATION DATE
+PREMIUM
+POLICY NUMBER
+CARRIER
+OTHER:
+PROPERTY
+AUTOMOBILE
+GENERAL LIABILITY
+CATEGORY
+PRIOR CARRIER INFORMATION (continued)
+AGENCY CUSTOMER ID:
+ACORD 125 (2016/03)
+Page 4 of 4
+
+
+## Page 5
+
+AGENCY CUSTOMER ID:
+EFFECTIVE DATE
+NAIC CODE
+CARRIER
+POLICY NUMBER
+APPLICANT / FIRST NAMED INSURED
+AGENCY
+4.  RETROACTIVE DATE:
+3.  NUMBER OF EMPLOYEES COVERED BY EMPLOYEE BENEFITS PLANS:
+2.  NUMBER OF EMPLOYEES:
+$
+1.  DEDUCTIBLE PER CLAIM:
+EMPLOYEE BENEFITS LIABILITY
+© 1993-2016 ACORD CORPORATION.  All rights reserved.
+ACORD 126 (2016/09)
+The ACORD name and logo are registered marks of ACORD
+Y / N
+4.  WAS TAIL COVERAGE PURCHASED UNDER ANY PREVIOUS POLICY?
+3.  HAS ANY PRODUCT, WORK, ACCIDENT, OR LOCATION BEEN EXCLUDED, UNINSURED OR SELF-INSURED FROM ANY PREVIOUS COVERAGE?
+EXPLAIN ALL "YES" RESPONSES
+2.  ENTRY DATE INTO UNINTERRUPTED CLAIMS MADE COVERAGE:
+1.  PROPOSED RETROACTIVE DATE:
+CLAIMS MADE (Explain all "Yes" responses)
+DATE (MM/DD/YYYY)
+COMMERCIAL GENERAL LIABILITY SECTION
+LOC #
+CLASSIFICATION DESCRIPTION
+CLASS
+CODE
+PREMIUM
+BASIS
+TERR
+EXPOSURE
+HAZ #
+(T) OTHER
+(U) UNIT - PER UNIT
+(M) ADMISSIONS - PER 1,000/ADM
+(C) TOTAL COST - PER $1,000/COST
+(A) AREA - PER 1,000/SQ FT
+(P) PAYROLL - PER $1,000/PAY
+(S) GROSS SALES - PER $1,000/SALES
+RATING AND PREMIUM BASIS
+PRODUCTS
+PREMIUM
+RATE
+SCHEDULE OF HAZARDS  (ACORD 211, Schedule of Hazards, may be attached if more space is required)
+IS NOT AVAILABLE.
+IS
+2.  MEDICAL PAYMENTS COVERAGE
+IS NOT AVAILABLE.
+IS
+1.  UM / UIM COVERAGE
+APPLICABLE ONLY IN WISCONSIN:   IF NON-OWNED ONLY AUTO COVERAGE IS TO BE PROVIDED UNDER THE POLICY:
+$
+OTHER:
+LOCATION
+PROJECT
+POLICY
+LIMIT APPLIES PER:
+GENERAL AGGREGATE
+PRODUCTS & COMPLETED OPERATIONS AGGREGATE
+PERSONAL & ADVERTISING INJURY
+EACH OCCURRENCE
+DAMAGE TO RENTED PREMISES (each occurrence)
+MEDICAL EXPENSE (Any one person)
+EMPLOYEE BENEFITS
+$
+$
+$
+$
+$
+$
+$
+COVERAGES
+LIMITS
+TOTAL
+OTHER
+PRODUCTS
+PREMISES/OPERATIONS
+PREMIUMS
+OCCURRENCE
+PER
+CLAIM
+PER
+$
+$
+BODILY INJURY
+$
+PROPERTY DAMAGE
+DEDUCTIBLES
+OCCURRENCE
+CLAIMS MADE
+OWNER'S & CONTRACTOR'S PROTECTIVE
+COMMERCIAL GENERAL LIABILITY
+OTHER COVERAGES, RESTRICTIONS AND/OR ENDORSEMENTS (For hired/non-owned auto coverages attach the applicable state Business Auto Section, ACORD 137)
+IMPORTANT - If CLAIMS MADE is checked in the COVERAGE / LIMITS section below, this is an application for a claims-made policy.
+Read all provisions of the policy carefully.
+Attach to ACORD 125
+PREM / OPS
+PREM / OPS
+PRODUCTS
+LOC #
+HAZ #
+CLASS
+CODE
+PREMIUM
+BASIS
+CLASSIFICATION DESCRIPTION
+EXPOSURE
+TERR
+PREM / OPS
+RATE
+PRODUCTS
+PREM / OPS
+PREMIUM
+PRODUCTS
+LOC #
+HAZ #
+CLASS
+CODE
+PREMIUM
+BASIS
+EXPOSURE
+TERR
+PREM / OPS
+PRODUCTS
+RATE
+PREM / OPS
+PRODUCTS
+PREMIUM
+CLASSIFICATION DESCRIPTION
+
+
+## Page 6
+
+Page 2 of 4
+AGENCY CUSTOMER ID:
+CONTRACTORS
+TIME STAFF:
+# PART-
+TIME STAFF:
+# FULL-
+SUBCONTRACTED:
+% OF WORK
+CONTRACTORS:
+$ PAID TO SUB-
+DESCRIBE THE TYPE OF WORK SUBCONTRACTED
+6.  DOES APPLICANT LEASE EQUIPMENT TO OTHERS WITH OR WITHOUT OPERATORS?
+5.  ARE SUBCONTRACTORS ALLOWED TO WORK WITHOUT PROVIDING YOU WITH A CERTIFICATE OF INSURANCE?
+4.  DO YOUR SUBCONTRACTORS CARRY COVERAGES OR LIMITS LESS THAN YOURS?
+3.  DO ANY OPERATIONS INCLUDE EXCAVATION, TUNNELING, UNDERGROUND WORK OR EARTH MOVING?
+2.  DO ANY OPERATIONS INCLUDE BLASTING OR UTILIZE OR STORE EXPLOSIVE MATERIAL?
+1.  DOES APPLICANT DRAW PLANS, DESIGNS, OR SPECIFICATIONS FOR OTHERS?
+Y / N
+EXPLAIN ALL "YES" RESPONSES (For all past or present operations)
+PRODUCTS / COMPLETED OPERATIONS
+PRINCIPAL COMPONENTS
+INTENDED USE
+LIFE
+EXPECTED
+MARKET
+TIME IN
+# OF UNITS
+ANNUAL GROSS SALES
+PRODUCTS
+Y / N
+EXPLAIN ALL "YES" RESPONSES (For all past or present products or operations)    PLEASE ATTACH LITERATURE, BROCHURES, LABELS, WARNINGS, ETC.
+1.   DOES APPLICANT INSTALL, SERVICE OR DEMONSTRATE PRODUCTS?
+2.   FOREIGN PRODUCTS SOLD, DISTRIBUTED, USED AS COMPONENTS?  (If "YES", attach ACORD 815)
+3.   RESEARCH AND DEVELOPMENT CONDUCTED OR NEW PRODUCTS PLANNED?
+4.   GUARANTEES, WARRANTIES, HOLD HARMLESS AGREEMENTS?
+5.   PRODUCTS RELATED TO AIRCRAFT/SPACE INDUSTRY?
+6.   PRODUCTS RECALLED, DISCONTINUED, CHANGED?
+7.   PRODUCTS OF OTHERS SOLD OR RE-PACKAGED UNDER APPLICANT LABEL?
+8.   PRODUCTS UNDER LABEL OF OTHERS?
+9.   VENDORS COVERAGE REQUIRED?
+10. DOES ANY NAMED INSURED SELL TO OTHER NAMED INSUREDS?
+ACORD 126 (2016/09)
+
+
+## Page 7
+
+AGENCY CUSTOMER ID:
+Page 3 of 4
+REFERENCE / LOAN #:
+EVIDENCE:
+RANK:
+CERTIFICATE
+NAME AND ADDRESS
+ACORD 45 attached for additional names
+ADDITIONAL INTEREST / CERTIFICATE RECIPIENT
+ITEM:
+CLASS:
+ITEM
+ITEM DESCRIPTION
+BUILDING:
+LOCATION:
+INTEREST IN ITEM NUMBER
+EMPLOYEE AS LESSOR
+LIENHOLDER
+MORTGAGEE
+LOSS PAYEE
+ADDITIONAL INSURED
+INTEREST
+LARGE EQUIPMENT
+SMALL TOOLS
+EQUIPMENT
+INSTRUCTION GIVEN (Y/N)
+LARGE EQUIPMENT
+SMALL TOOLS
+TYPE OF EQUIPMENT
+DO YOU RENT OR LOAN EQUIPMENT TO OTHERS?
+5.
+ANY DEMOLITION EXPOSURE CONTEMPLATED?
+15.
+ANY STRUCTURAL ALTERATIONS CONTEMPLATED?
+14.
+CONTACT
+SPORT (Y/N)
+EXTENT OF SPONSORSHIP:
+OVER 18
+13 - 18
+12 & UNDER
+AGE GROUP
+TYPE OF SPORT
+CONTACT
+SPORT (Y/N)
+EXTENT OF SPONSORSHIP:
+OVER 18
+13 - 18
+12 & UNDER
+AGE GROUP
+TYPE OF SPORT
+ARE ATHLETIC TEAMS SPONSORED?
+13.
+ARE SOCIAL EVENTS SPONSORED?
+12.
+LIFE GUARD
+IN GROUND
+ABOVE GROUND
+DIVING BOARD
+LIMITED ACCESS
+IS THERE A SWIMMING POOL ON PREMISES?  (Check all that apply)
+11.
+APPROVED FENCE
+SLIDE
+DESCRIBE OTHER LODGING OPERATIONS
+Sq. Ft.
+TOTAL APT AREA
+# APTS
+ARE THERE ANY LODGING OPERATIONS INCLUDING APARTMENTS?  (If "YES", answer the following):
+10.
+GENERAL INFORMATION
+9.    RECREATION FACILITIES PROVIDED?
+8.    IS A FEE CHARGED FOR PARKING?
+7.    ANY PARKING FACILITIES OWNED/RENTED?
+6.    ANY WATERCRAFT, DOCKS, FLOATS OWNED, HIRED OR LEASED?
+4.    ANY OPERATIONS SOLD, ACQUIRED, OR DISCONTINUED IN LAST FIVE (5) YEARS?
+3.
+DO/HAVE PAST, PRESENT OR DISCONTINUED OPERATIONS INVOLVE(D) STORING, TREATING, DISCHARGING, APPLYING, DISPOSING, OR
+TRANSPORTING OF HAZARDOUS MATERIAL? (e.g. landfills, wastes, fuel tanks, etc)
+2.    ANY EXPOSURE TO RADIOACTIVE/NUCLEAR MATERIALS?
+1.    ANY MEDICAL FACILITIES PROVIDED OR MEDICAL PROFESSIONALS EMPLOYED OR CONTRACTED?
+Y / N
+EXPLAIN ALL "YES" RESPONSES (For all past or present operations)
+LENDER'S LOSS PAYABLE
+ACORD 126 (2016/09)
+
+
+## Page 8
+
+WORKERS
+COMPENSATION
+COVERAGE CARRIED (Y/N)
+LEASE FROM
+WORKERS
+COMPENSATION
+COVERAGE CARRIED (Y/N)
+LEASE TO
+DO YOU LEASE EMPLOYEES TO OR FROM OTHER EMPLOYERS?
+17.
+16.  HAS APPLICANT BEEN ACTIVE IN OR IS CURRENTLY ACTIVE IN JOINT VENTURES?
+AGENCY CUSTOMER ID:
+18.  IS THERE A LABOR INTERCHANGE WITH ANY OTHER BUSINESS OR SUBSIDIARIES?
+19.  ARE DAY CARE FACILITIES OPERATED OR CONTROLLED?
+REMARKS (ACORD 101, Additional Remarks Schedule, may be attached if more space is required)
+GENERAL INFORMATION (continued)
+Y / N
+EXPLAIN ALL "YES" RESPONSES (For all past or present operations)
+Page 4 of 4
+22.  DOES THE BUSINESSES' PROMOTIONAL LITERATURE MAKE ANY REPRESENTATIONS ABOUT THE SAFETY OR SECURITY OF THE PREMISES?
+21.  IS THERE A FORMAL, WRITTEN SAFETY AND SECURITY POLICY IN EFFECT?
+20.  HAVE ANY CRIMES OCCURRED OR BEEN ATTEMPTED ON YOUR PREMISES WITHIN THE LAST THREE (3) YEARS?
+SIGNATURE
+Applicable in OR:  Any person who knowingly and with intent to defraud or solicit another to defraud the insurer by submitting an application containing a
+false statement as to any material fact may be violating state law.
+Applicable in NJ:  Any person who includes any false or misleading information on an application for an insurance policy is subject to criminal and civil
+penalties.
+Applicable in KY, NY, OH and PA:  Any person who knowingly and with intent to defraud any insurance company or other person files an application for
+insurance or statement of claim containing any materially false information or conceals for the purpose of misleading, information concerning any fact material
+thereto commits a fraudulent insurance act, which is a crime and subjects such person to criminal and civil penalties (not to exceed five thousand dollars and
+the stated value of the claim for each such violation)*. *Applies in NY Only.
+Applicable in PR:  Any person who knowingly and with the intention of defrauding presents false information in an insurance application, or presents, helps,
+or causes the presentation of a fraudulent claim for the payment of a loss or any other benefit, or presents more than one claim for the same damage or loss,
+shall incur a felony and, upon conviction, shall be sanctioned for each violation by a fine of not less than five thousand dollars ($5,000) and not more than ten
+thousand dollars ($10,000), or a fixed term of imprisonment for three (3) years, or both penalties.  Should aggravating circumstances [be] present, the penalty
+thus established may be increased to a maximum of five (5) years, if extenuating circumstances are present, it may be reduced to a minimum of two (2)
+years.
+Applicable in ME, TN, VA and WA:  It is a crime to knowingly provide false, incomplete or misleading information to an insurance company for the purpose
+of defrauding the company.  Penalties (may)* include imprisonment, fines and denial of insurance benefits. *Applies in ME Only.
+Applicable in KS:  Any person who, knowingly and with intent to defraud, presents, causes to be presented or prepares with knowledge or belief that it will be
+presented to or by an insurer, purported insurer, broker or any agent thereof, any written, electronic, electronic impulse, facsimile, magnetic, oral, or
+telephonic communication or statement as part of, or in support of, an application for the issuance of, or the rating of an insurance policy for personal or
+commercial insurance, or a claim for payment or other benefit pursuant to an insurance policy for commercial or personal insurance which such person knows
+to contain materially false information concerning any fact material thereto; or conceals, for the purpose of misleading, information concerning any fact
+material thereto commits a fraudulent insurance act.
+Applicable in FL and OK:  Any person who knowingly and with intent to injure, defraud, or deceive any insurer files a statement of claim or an application
+containing any false, incomplete, or misleading information is guilty of a felony (of the third degree)*. *Applies in FL Only.
+Applicable in CO:  It is unlawful to knowingly provide false, incomplete, or misleading facts or information to an insurance company for the purpose of
+defrauding or attempting to defraud the company.  Penalties may include imprisonment, fines, denial of insurance and civil damages.  Any insurance
+company or agent of an insurance company who knowingly provides false, incomplete, or misleading facts or information to a policyholder or claimant for the
+purpose of defrauding or attempting to defraud the policyholder or claimant with regard to a settlement or award payable from insurance proceeds shall be
+reported to the Colorado Division of Insurance within the Department of Regulatory Agencies.
+Applicable in AL, AR, DC, LA, MD, NM, RI and WV:  Any person who knowingly (or willfully)* presents a false or fraudulent claim for payment of a loss or
+benefit or knowingly (or willfully)* presents false information in an application for insurance is guilty of a crime and may be subject to fines and confinement in
+prison. *Applies in MD Only.
+NATIONAL PRODUCER NUMBER
+(Required in Florida)
+PRODUCER'S SIGNATURE
+DATE
+APPLICANT'S SIGNATURE
+PRODUCER'S NAME (Please Print)
+STATE PRODUCER LICENSE NO
+THE UNDERSIGNED IS AN AUTHORIZED REPRESENTATIVE OF THE APPLICANT AND REPRESENTS THAT REASONABLE INQUIRY HAS BEEN MADE TO OBTAIN THE
+ANSWERS TO QUESTIONS ON THIS APPLICATION.  HE/SHE REPRESENTS THAT THE ANSWERS ARE TRUE, CORRECT AND COMPLETE TO THE BEST OF HIS/HER
+KNOWLEDGE.
+ACORD 126 (2016/09)
+
+
+## Page 9
+
+DED
+TYPE
+AMOUNT
+BLKT #
+TYPE
+AMOUNT
+BLKT #
+LIMIT:  $
+REJECT COVERAGE
+ACCEPT COVERAGE
+MINE SUBSIDENCE COVERAGE (Required in IL, IN, KY and WV)
+TYPE
+DED
+BLANKET SUMMARY
+REFERENCE / LOAN #:
+EVIDENCE:
+RANK:
+CERTIFICATE
+NAME AND ADDRESS
+ACORD 45 attached for additional names
+ADDITIONAL INTEREST
+ITEM:
+CLASS:
+ITEM
+ITEM DESCRIPTION
+BUILDING:
+LOCATION:
+INTEREST IN ITEM NUMBER
+MORTGAGEE
+LOSS PAYEE
+INTEREST
+PROPERTY HAS BEEN DESIGNATED AN HISTORICAL LANDMARK
+Y / N
+SOLID FUEL
+BOILER
+SECONDARY HEAT
+IF BOILER, IS INSURANCE PLACED ELSEWHERE?
+Y / N
+SOLID FUEL
+BOILER
+PRIMARY HEAT
+IF BOILER, IS INSURANCE PLACED ELSEWHERE?
+GONG
+LOCAL
+STATION
+CODE NUMBER
+FIRE DISTRICT
+# OF OPEN SIDES ON STRUCTURE:
+VALU-
+ATION
+RIGHT EXPOSURE & DISTANCE
+LEFT EXPOSURE & DISTANCE
+REAR EXPOSURE & DISTANCE
+FRONT EXPOSURE & DISTANCE
+BREAKDOWN OR CONTAMINATION
+SELLING
+PRICE
+POWER OUTAGE
+LIMIT:  $
+REJECT COVERAGE
+ACCEPT COVERAGE
+SINKHOLE COVERAGE (Required in Florida)
+OPTIONS
+REFRIG MAINT
+AGREEMENT
+(Y / N)
+$
+DEDUCTIBLE
+$
+LIMIT
+DESCRIPTION OF PROPERTY COVERED
+SPOILAGE
+COVERAGE
+(Y / N)
+ADDITIONAL COVERAGES, OPTIONS, RESTRICTIONS, ENDORSEMENTS AND RATING INFORMATION
+VALUE REPORTING INFORMATION - Attach ACORD 811
+BUSINESS INCOME / EXTRA EXPENSE - Attach ACORD 810
+ADDITIONAL INFORMATION
+SUBJECT OF INSURANCE
+AMOUNT
+COINS %
+CAUSES OF LOSS
+INFLATION
+GUARD %
+FORMS AND CONDITIONS TO APPLY
+BLKT
+#
+CONSTRUCTION TYPE
+DISTANCE TO
+HYDRANT
+FIRE STAT
+FT
+MI
+PROT CL
+# STORIES
+# BASM'TS
+YR BUILT
+TOTAL AREA
+OTHER OCCUPANCIES
+ROOF TYPE
+TAX CODE
+GRADE
+BLDG CODE
+SEMI- RESISTIVE
+RESISTIVE
+WIND CLASS
+INSTALLED:
+DATE
+MANUFACTURER:
+STOVE OR FIREPLACE INSERT
+HEATING SOURCE INCL WOODBURNING
+% SPRNK
+CENTRAL STATION
+LOCAL GONG
+PREMISES FIRE PROTECTION (Sprinklers, Standpipes, CO2 / Chemical Systems)
+FIRE ALARM MANUFACTURER
+HEATING, YR:
+PLUMBING, YR:
+OTHER:
+ROOFING, YR:
+WIRING, YR:
+BUILDING IMPROVEMENTS
+YR:
+BURGLAR ALARM TYPE
+CERTIFICATE #
+EXPIRATION DATE
+EXTENT
+GRADE
+CENTRAL
+WITH KEYS
+BURGLAR ALARM INSTALLED AND SERVICED BY
+# GUARDS / WATCHMEN
+CLOCK HOURLY
+EFFECTIVE DATE
+NAIC CODE
+CARRIER
+POLICY NUMBER
+NAMED INSURED(S)
+AGENCY NAME
+AGENCY CUSTOMER ID:
+© 1985-2015 ACORD CORPORATION.  All rights reserved.
+The ACORD name and logo are registered marks of ACORD
+ACORD 140 (2016/03)
+BLDG DESCRIPTION:
+STREET ADDRESS:
+PREMISES #:
+BUILDING #:
+PREMISES INFORMATION
+DATE (MM/DD/YYYY)
+PROPERTY SECTION
+LENDER'S LOSS PAYABLE
+Attach to ACORD 125
+
+
+## Page 10
+
+REMARKS  (ACORD 101, Additional Remarks Schedule, may be attached if more space is required)
+LIMIT:  $
+REJECT COVERAGE
+ACCEPT COVERAGE
+MINE SUBSIDENCE COVERAGE (Required in IL, IN, KY and WV)
+TYPE
+DED
+VALU-
+ATION
+SUBJECT OF INSURANCE
+AMOUNT
+COINS %
+CAUSES OF LOSS
+INFLATION
+GUARD %
+DED
+FORMS AND CONDITIONS TO APPLY
+BLKT
+#
+REFERENCE / LOAN #:
+EVIDENCE:
+RANK:
+CERTIFICATE
+NAME AND ADDRESS
+ACORD 45 attached for additional names
+ADDITIONAL INTEREST
+ITEM:
+CLASS:
+ITEM
+ITEM DESCRIPTION
+BUILDING:
+LOCATION:
+INTEREST IN ITEM NUMBER
+MORTGAGEE
+LOSS PAYEE
+INTEREST
+PROPERTY HAS BEEN DESIGNATED AN HISTORICAL LANDMARK
+Y / N
+SOLID FUEL
+BOILER
+SECONDARY HEAT
+IF BOILER, IS INSURANCE PLACED ELSEWHERE?
+Y / N
+SOLID FUEL
+BOILER
+PRIMARY HEAT
+IF BOILER, IS INSURANCE PLACED ELSEWHERE?
+GONG
+LOCAL
+STATION
+CODE NUMBER
+FIRE DISTRICT
+# OF OPEN SIDES ON STRUCTURE:
+RIGHT EXPOSURE & DISTANCE
+LEFT EXPOSURE & DISTANCE
+REAR EXPOSURE & DISTANCE
+FRONT EXPOSURE & DISTANCE
+BREAKDOWN OR CONTAMINATION
+SELLING
+PRICE
+POWER OUTAGE
+LIMIT:  $
+REJECT COVERAGE
+ACCEPT COVERAGE
+SINKHOLE COVERAGE (Required in Florida)
+OPTIONS
+REFRIG MAINT
+AGREEMENT
+(Y / N)
+$
+DEDUCTIBLE
+$
+LIMIT
+DESCRIPTION OF PROPERTY COVERED
+SPOILAGE
+COVERAGE
+(Y / N)
+ADDITIONAL COVERAGES, OPTIONS, RESTRICTIONS, ENDORSEMENTS AND RATING INFORMATION
+VALUE REPORTING INFORMATION - Attach ACORD 811
+BUSINESS INCOME / EXTRA EXPENSE - Attach ACORD 810
+ADDITIONAL INFORMATION
+CONSTRUCTION TYPE
+DISTANCE TO
+HYDRANT
+FIRE STAT
+FT
+MI
+PROT CL
+# STORIES
+# BASM'TS
+YR BUILT
+TOTAL AREA
+OTHER OCCUPANCIES
+ROOF TYPE
+TAX CODE
+GRADE
+BLDG CODE
+SEMI- RESISTIVE
+RESISTIVE
+WIND CLASS
+INSTALLED:
+DATE
+MANUFACTURER:
+STOVE OR FIREPLACE INSERT
+HEATING SOURCE INCL WOODBURNING
+% SPRNK
+CENTRAL STATION
+LOCAL GONG
+PREMISES FIRE PROTECTION (Sprinklers, Standpipes, CO2 / Chemical Systems)
+FIRE ALARM MANUFACTURER
+HEATING, YR:
+PLUMBING, YR:
+OTHER:
+ROOFING, YR:
+WIRING, YR:
+BUILDING IMPROVEMENTS
+YR:
+BURGLAR ALARM TYPE
+CERTIFICATE #
+EXPIRATION DATE
+EXTENT
+GRADE
+CENTRAL
+WITH KEYS
+BURGLAR ALARM INSTALLED AND SERVICED BY
+# GUARDS / WATCHMEN
+CLOCK HOURLY
+AGENCY CUSTOMER ID:
+BLDG DESCRIPTION:
+STREET ADDRESS:
+PREMISES #:
+BUILDING #:
+ADDITIONAL
+PREMISES INFORMATION
+ACORD 140 (2016/03)
+Page 2 of 3
+LENDER'S LOSS PAYABLE
+
+
+## Page 11
+
+THE UNDERSIGNED IS AN AUTHORIZED REPRESENTATIVE OF THE APPLICANT AND REPRESENTS THAT REASONABLE INQUIRY HAS BEEN MADE TO OBTAIN THE
+ANSWERS TO QUESTIONS ON THIS APPLICATION.  HE/SHE REPRESENTS THAT THE ANSWERS ARE TRUE, CORRECT AND COMPLETE TO THE BEST OF HIS/HER
+KNOWLEDGE.
+Applicable in NJ
+Any person who includes any false or misleading information on an application for an insurance policy is subject to criminal and civil penalties.
+Applicable in PR
+Any person who knowingly and with the intention of defrauding presents false information in an insurance application, or presents, helps, or causes the
+presentation of a fraudulent claim for the payment of a loss or any other benefit, or presents more than one claim for the same damage or loss, shall incur a
+felony and, upon conviction, shall be sanctioned for each violation by a fine of not less than five thousand dollars ($5,000) and not more than ten thousand
+dollars ($10,000), or a fixed term of imprisonment for three (3) years, or both penalties.  Should aggravating circumstances [be] present, the penalty thus
+established may be increased to a maximum of five (5) years, if extenuating circumstances are present, it may be reduced to a minimum of two (2) years.
+Applicable in OR
+Any person who knowingly and with intent to defraud or solicit another to defraud the insurer by submitting an application containing a false statement as to
+any material fact may be violating state law.
+Applicable in ME, TN, VA and WA
+It is a crime to knowingly provide false, incomplete or misleading information to an insurance company for the purpose of defrauding the company.  Penalties
+(may)* include imprisonment, fines and denial of insurance benefits.  *Applies in ME Only.
+Applicable in KY, NY, OH and PA
+Any person who knowingly and with intent to defraud any insurance company or other person files an application for insurance or statement of claim
+containing any materially false information or conceals for the purpose of misleading, information concerning any fact material thereto commits a fraudulent
+insurance act, which is a crime and subjects such person to criminal and civil penalties* (not to exceed five thousand dollars and the stated value of the claim
+for each such violation)*. *Applies in NY Only.
+Applicable in KS
+Any person who, knowingly and with intent to defraud, presents, causes to be presented or prepares with knowledge or belief that it will be presented to or by
+an insurer, purported insurer, broker or any agent thereof, any written statement as part of, or in support of, an application for the issuance of, or the rating of
+an insurance policy for personal or commercial insurance, or a claim for payment or other benefit pursuant to an insurance policy for commercial or personal
+insurance which such person knows to contain materially false information concerning any fact material thereto; or conceals, for the purpose of misleading,
+information concerning any fact material thereto commits a fraudulent insurance act.
+Applicable in FL and OK
+Any person who knowingly and with intent to injure, defraud, or deceive any insurer files a statement of claim or an application containing any false,
+incomplete, or misleading information is guilty of a felony (of the third degree)*.  *Applies in FL Only.
+Applicable in CO
+Any person who knowingly (or willfully)* presents a false or fraudulent claim for payment of a loss or benefit or knowingly (or willfully)* presents false
+information in an application for insurance is guilty of a crime and may be subject to fines and confinement in prison.  *Applies in MD Only.
+It is unlawful to knowingly provide false, incomplete, or misleading facts or information to an insurance company for the purpose of defrauding or attempting to
+defraud the company.  Penalties may include imprisonment, fines, denial of insurance and civil damages.  Any insurance company or agent of an insurance
+company who knowingly provides false, incomplete, or misleading facts or information to a policyholder or claimant for the purpose of defrauding or
+attempting to defraud the policyholder or claimant with regard to a settlement or award payable from insurance proceeds shall be reported to the Colorado
+Division of Insurance within the Department of Regulatory Agencies.
+Applicable in AL, AR, DC, LA, MD, NM, RI and WV
+NATIONAL PRODUCER NUMBER
+(Required in Florida)
+PRODUCER'S SIGNATURE
+DATE
+APPLICANT'S SIGNATURE
+PRODUCER'S NAME (Please Print)
+STATE PRODUCER LICENSE NO
+SIGNATURE
+AGENCY CUSTOMER ID:
+ACORD 140 (2016/03)
+Page 3 of 3
+
+
+---
+
+## Structured layer (Unstructured)
+
+# Unstructured extraction
+
+Source: acord-125-126-140.pdf
+
+## Element 1 (page 1) - Image
+
+[Empty element]
+
+## Element 2 (page 1) - Title
+
+COMMERCIAL INSURANCE APPLICATION APPLICANT INFORMATION SECTION
+
+## Element 3 (page 1) - Header
+
+DATE (MM/DD/YYYY)
+
+## Element 4 (page 1) - NarrativeText
+
+AGENCY
+
+## Element 5 (page 1) - UncategorizedText
+
+CARRIER
+
+## Element 6 (page 1) - UncategorizedText
+
+NAIC CODE
+
+## Element 7 (page 1) - UncategorizedText
+
+COMPANY POLICY OR PROGRAM NAME
+
+## Element 8 (page 1) - UncategorizedText
+
+PROGRAM CODE
+
+## Element 9 (page 1) - UncategorizedText
+
+POLICY NUMBER
+
+## Element 10 (page 1) - UncategorizedText
+
+CONTACT
+
+## Element 11 (page 1) - UncategorizedText
+
+UNDERWRITER OFFICE
+
+## Element 12 (page 1) - UncategorizedText
+
+UNDERWRITER
+
+## Element 13 (page 1) - Table
+
+STATUS OF TRANSACTION QUOTE ISSUE POLICY BOUND (Give Date and/or Attach Copy): RENEW SUBCODE: CHANGE DATE TIME AM CANCEL PM PREMIUM PREMIUM PREMIUM BOILER & MACHINERY $ CYBER AND PRIVACY $ YACHT $ BUSINESS AUTO $ FIDUCIARY LIABILITY $ $ BUSINESS OWNERS $ GARAGE AND DEALERS $ $ COMMERCIAL GENERAL LIABILITY $ LIQUOR LIABILITY $ $ COMMERCIAL INLAND MARINE $ MOTOR CARRIER $ $ COMMERCIAL PROPERTY $ TRUCKERS $ $ CRIME $ UMBRELLA $ $ ACCOUNTS RECEIVABLE / VALUABLE PAPERS GLASS AND SIGN SECTION STATEMENT / SCHEDULE OF VALUES ADDITIONAL INTEREST SCHEDULE HOTEL / MOTEL SUPPLEMENT STATE SUPPLEMENT (If applicable) ADDITIONAL PREMISES INFORMATION SCHEDULE INSTALLATION / BUILDERS RISK SECTION VACANT BUILDING SUPPLEMENT
+
+## Element 14 (page 1) - UncategorizedText
+
+NAME:
+
+## Element 15 (page 1) - UncategorizedText
+
+PHONE
+
+## Element 16 (page 1) - UncategorizedText
+
+(A/C, No, Ext):
+
+## Element 17 (page 1) - UncategorizedText
+
+FAX
+
+## Element 18 (page 1) - UncategorizedText
+
+(A/C, No):
+
+## Element 19 (page 1) - UncategorizedText
+
+E-MAIL
+
+## Element 20 (page 1) - UncategorizedText
+
+ADDRESS:
+
+## Element 21 (page 1) - UncategorizedText
+
+CODE:
+
+## Element 22 (page 1) - UncategorizedText
+
+AGENCY CUSTOMER ID:
+
+## Element 23 (page 1) - UncategorizedText
+
+LINES OF BUSINESS
+
+## Element 24 (page 1) - UncategorizedText
+
+INDICATE LINES OF BUSINESS
+
+## Element 25 (page 1) - Table
+
+CRIME $ UMBRELLA $ $ ACCOUNTS RECEIVABLE / VALUABLE PAPERS GLASS AND SIGN SECTION STATEMENT / SCHEDULE OF VALUES ADDITIONAL INTEREST SCHEDULE HOTEL / MOTEL SUPPLEMENT STATE SUPPLEMENT (If applicable) ADDITIONAL PREMISES INFORMATION SCHEDULE INSTALLATION / BUILDERS RISK SECTION VACANT BUILDING SUPPLEMENT APARTMENT BUILDING SUPPLEMENT INTERNATIONAL LIABILITY EXPOSURE SUPPLEMENT VEHICLE SCHEDULE CONDO ASSN BYLAWS (for D&O Coverage only) INTERNATIONAL PROPERTY EXPOSURE SUPPLEMENT CONTRACTORS SUPPLEMENT LOSS SUMMARY COVERAGES SCHEDULE OPEN CARGO SECTION DEALERS SECTION PREMIUM PAYMENT SUPPLEMENT DRIVER INFORMATION SCHEDULE PROFESSIONAL LIABILITY SUPPLEMENT ELECTRONIC DATA PROCESSING SECTION RESTAURANT / TAVERN SUPPLEMENT PROPOSED EXP DATE BILLING PLAN PAYMENT PLAN METHOD OF PAYMENT AUDIT DEPOSIT MINIMUM PREMIUM POLICY PREMIUM $ $ $ DIRECT AGENCY NAME (First Named Insured) AND MAILING ADDRESS (including ZIP+4) GL CODE SIC NAICS FEIN OR SOC SEC # BUSINESS PHONE #: WEBSITE ADDRESS CORPORATION JOINT VENTURE NOT FOR PROFIT ORG SUBCHAPTER "S" CORPORATION INDIVIDUAL LLC NO. OF MEMBERS AND MANAGERS: PARTNERSHIP TRUST NAME (Other Named Insured) AND MAILING ADDRESS (including ZIP+4) GL CODE SIC NAICS FEIN OR SOC SEC # BUSINESS PHONE #: WEBSITE ADDRESS CORPORATION JOINT VENTURE NOT FOR PROFIT ORG SUBCHAPTER "S" CORPORATION INDIVIDUAL LLC NO. OF MEMBERS AND MANAGERS: PARTNERSHIP TRUST NAME (Other Named Insured) AND MAILING ADDRESS (including ZIP+4) GL CODE SIC NAICS FEIN OR SOC SEC # BUSINESS PHONE #: WEBSITE ADDRESS CORPORATION JOINT VENTURE NOT FOR PROFIT ORG SUBCHAPTER "S" CORPORATION
+
+## Element 26 (page 1) - UncategorizedText
+
+UMBRELLA
+
+## Element 27 (page 1) - UncategorizedText
+
+$
+
+## Element 28 (page 1) - UncategorizedText
+
+CRIME
+
+## Element 29 (page 1) - UncategorizedText
+
+$
+
+## Element 30 (page 1) - UncategorizedText
+
+$
+
+## Element 31 (page 1) - UncategorizedText
+
+ATTACHMENTS
+
+## Element 32 (page 1) - UncategorizedText
+
+|
+
+## Element 33 (page 1) - UncategorizedText
+
+ACCOUNTS RECEIVABLE / VALUABLE PAPERS
+
+## Element 34 (page 1) - UncategorizedText
+
+GLASS AND SIGN SECTION
+
+## Element 35 (page 1) - UncategorizedText
+
+STATEMENT / SCHEDULE OF VALUES
+
+## Element 36 (page 1) - UncategorizedText
+
+ADDITIONAL INTEREST SCHEDULE
+
+## Element 37 (page 1) - UncategorizedText
+
+HOTEL / MOTEL SUPPLEMENT
+
+## Element 38 (page 1) - UncategorizedText
+
+STATE SUPPLEMENT (If applicable)
+
+## Element 39 (page 1) - UncategorizedText
+
+INSTALLATION / BUILDERS RISK SECTION
+
+## Element 40 (page 1) - UncategorizedText
+
+VACANT BUILDING SUPPLEMENT
+
+## Element 41 (page 1) - UncategorizedText
+
+ADDITIONAL PREMISES INFORMATION SCHEDULE
+
+## Element 42 (page 1) - UncategorizedText
+
+|
+
+## Element 43 (page 1) - UncategorizedText
+
+POLICY INFORMATION
+
+## Element 44 (page 1) - UncategorizedText
+
+PROPOSED EFF DATE
+
+## Element 45 (page 1) - UncategorizedText
+
+APPLICANT INFORMATION
+
+## Element 46 (page 1) - Table
+
+CORPORATION JOINT VENTURE NOT FOR PROFIT ORG SUBCHAPTER "S" CORPORATION INDIVIDUAL LLC NO. OF MEMBERS AND MANAGERS: PARTNERSHIP TRUST Page 1 of 4
+
+## Element 47 (page 1) - UncategorizedText
+
+CORPORATION
+
+## Element 48 (page 1) - UncategorizedText
+
+JOINT VENTURE
+
+## Element 49 (page 1) - UncategorizedText
+
+NOT FOR PROFIT ORG
+
+## Element 50 (page 1) - UncategorizedText
+
+SUBCHAPTER "S" CORPORATION
+
+## Element 51 (page 1) - UncategorizedText
+
+ACORD 125 (2016/03)
+
+## Element 52 (page 1) - UncategorizedText
+
+© 1993-2015 ACORD CORPORATION. All rights reserved.
+
+## Element 53 (page 1) - UncategorizedText
+
+The ACORD name and logo are registered marks of ACORD
+
+## Element 54 (page 2) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 55 (page 2) - Header
+
+CONTACT INFORMATION
+
+## Element 56 (page 2) - Table
+
+CONTACT TYPE: CONTACT TYPE: CONTACT NAME: CONTACT NAME: PRIMARY PHONE # HOME BUS CELL SECONDARY PHONE # HOME BUS CELL PRIMARY PHONE # HOME BUS CELL SECONDARY PHONE # HOME BUS CELL PRIMARY E-MAIL ADDRESS: PRIMARY E-MAIL ADDRESS: SECONDARY E-MAIL ADDRESS: SECONDARY E-MAIL ADDRESS: PREMISES INFORMATION (Attach ACORD 823 for Additional Premises) LOC # STREET CITY LIMITS INTEREST # FULL TIME EMPL ANNUAL REVENUES: $ INSIDE OWNER OCCUPIED AREA: SQ FT BLD # CITY: STATE: OUTSIDE TENANT # PART TIME EMPL OPEN TO PUBLIC AREA: SQ FT COUNTY: ZIP: TOTAL BUILDING AREA: SQ FT DESCRIPTION OF OPERATIONS: ANY AREA LEASED TO OTHERS? Y / N LOC # STREET CITY LIMITS INTEREST # FULL TIME EMPL ANNUAL REVENUES: $ INSIDE OWNER OCCUPIED AREA: SQ FT BLD # CITY: STATE: OUTSIDE TENANT # PART TIME EMPL OPEN TO PUBLIC AREA: SQ FT COUNTY: ZIP: TOTAL BUILDING AREA: SQ FT DESCRIPTION OF OPERATIONS: ANY AREA LEASED TO OTHERS? Y / N LOC # STREET CITY LIMITS INTEREST # FULL TIME EMPL ANNUAL REVENUES: $ INSIDE OWNER OCCUPIED AREA: SQ FT BLD # CITY: STATE: OUTSIDE TENANT # PART TIME EMPL OPEN TO PUBLIC AREA: SQ FT COUNTY: ZIP: TOTAL BUILDING AREA: SQ FT DESCRIPTION OF OPERATIONS: ANY AREA LEASED TO OTHERS? Y / N LOC # STREET CITY LIMITS INTEREST # FULL TIME EMPL ANNUAL REVENUES: $ INSIDE OWNER OCCUPIED AREA: SQ FT BLD # CITY: STATE: OUTSIDE TENANT # PART TIME EMPL OPEN TO PUBLIC AREA: SQ FT COUNTY: ZIP: TOTAL BUILDING AREA: SQ FT DESCRIPTION OF OPERATIONS: ANY AREA LEASED TO OTHERS? Y / N NATURE OF BUSINESS APARTMENTS CONTRACTOR MANUFACTURING RESTAURANT SERVICE DATE BUSINESS STARTED (MM/DD/YYYY) CONDOMINIUMS INSTITUTIONAL OFFICE RETAIL WHOLESALE DESCRIPTION OF PRIMARY OPERATIONS
+
+## Element 57 (page 2) - Table
+
+INSTALLATION, SERVICE OR REPAIR WORK %
+
+## Element 58 (page 2) - UncategorizedText
+
+OFF PREMISES INSTALLATION, SERVICE OR REPAIR WORK
+
+## Element 59 (page 2) - UncategorizedText
+
+RETAIL STORES OR SERVICE OPERATIONS % OF TOTAL SALES:
+
+## Element 60 (page 2) - UncategorizedText
+
+%
+
+## Element 61 (page 2) - UncategorizedText
+
+DESCRIPTION OF OPERATIONS OF OTHER NAMED INSUREDS
+
+## Element 62 (page 2) - Table
+
+ADDITIONAL INTEREST (Not all fields apply to all scenarios - provide only the necessary data) Attach ACORD 45 for more Additional Interests INTEREST NAME AND ADDRESS RANK: EVIDENCE: CERTIFICATE POLICY SEND BILL INTEREST IN ITEM NUMBER ADDITIONAL INSURED LIENHOLDER LOCATION: BUILDING: BREACH OF WARRANTY LOSS PAYEE VEHICLE: BOAT: CO-OWNER MORTGAGEE AIRPORT: AIRCRAFT: EMPLOYEE AS LESSOR OWNER ITEM CLASS: ITEM: LEASEBACK OWNER REGISTRANT ITEM DESCRIPTION LENDER'S LOSS PAYABLE TRUSTEE REFERENCE / LOAN #: INTEREST END DATE: LIEN AMOUNT: PHONE (A/C, No, Ext): FAX (A/C, No): REASON FOR INTEREST: E-MAIL ADDRESS:
+
+## Element 63 (page 2) - UncategorizedText
+
+ACORD 125 (2016/03)
+
+## Element 64 (page 2) - FigureCaption
+
+Page 2 of 4
+
+## Element 65 (page 3) - Title
+
+GENERAL INFORMATION
+
+## Element 66 (page 3) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 67 (page 3) - UncategorizedText
+
+EXPLAIN ALL "YES" RESPONSES
+
+## Element 68 (page 3) - UncategorizedText
+
+1a.
+
+## Element 69 (page 3) - UncategorizedText
+
+IS THE APPLICANT A SUBSIDIARY OF ANOTHER ENTITY ?
+
+## Element 70 (page 3) - UncategorizedText
+
+PARENT COMPANY NAME
+
+## Element 71 (page 3) - UncategorizedText
+
+RELATIONSHIP DESCRIPTION
+
+## Element 72 (page 3) - UncategorizedText
+
+% OWNED
+
+## Element 73 (page 3) - UncategorizedText
+
+1b.
+
+## Element 74 (page 3) - UncategorizedText
+
+DOES THE APPLICANT HAVE ANY SUBSIDIARIES?
+
+## Element 75 (page 3) - UncategorizedText
+
+SUBSIDIARY COMPANY NAME
+
+## Element 76 (page 3) - UncategorizedText
+
+RELATIONSHIP DESCRIPTION
+
+## Element 77 (page 3) - UncategorizedText
+
+% OWNED
+
+## Element 78 (page 3) - UncategorizedText
+
+2.
+
+## Element 79 (page 3) - UncategorizedText
+
+IS A FORMAL SAFETY PROGRAM IN OPERATION?
+
+## Element 80 (page 3) - UncategorizedText
+
+SAFETY MANUAL
+
+## Element 81 (page 3) - UncategorizedText
+
+[|
+
+## Element 82 (page 3) - UncategorizedText
+
+SAFETY POSITION
+
+## Element 83 (page 3) - UncategorizedText
+
+[|
+
+## Element 84 (page 3) - UncategorizedText
+
+MONTHLY MEETINGS
+
+## Element 85 (page 3) - UncategorizedText
+
+OSHA
+
+## Element 86 (page 3) - UncategorizedText
+
+3. ANY EXPOSURE TO FLAMMABLES, EXPLOSIVES, CHEMICALS?
+
+## Element 87 (page 3) - Table
+
+LINE OF BUSINESS POLICY NUMBER LINE OF BUSINESS POLICY NUMBER
+
+## Element 88 (page 3) - UncategorizedText
+
+4. ANY OTHER INSURANCE WITH THIS COMPANY? (List policy numbers)
+
+## Element 89 (page 3) - UncategorizedText
+
+5.
+
+## Element 90 (page 3) - UncategorizedText
+
+ANY POLICY OR COVERAGE DECLINED, CANCELLED OR NON-RENEWED DURING THE PRIOR THREE (3) YEARS FOR ANY PREMISES OR
+
+## Element 91 (page 3) - UncategorizedText
+
+OPERATIONS? (Missouri Applicants - Do not answer this question)
+
+## Element 92 (page 3) - UncategorizedText
+
+NON-PAYMENT
+
+## Element 93 (page 3) - UncategorizedText
+
+NON-RENEWAL
+
+## Element 94 (page 3) - UncategorizedText
+
+[|
+
+## Element 95 (page 3) - UncategorizedText
+
+|| UNDERWRITING
+
+## Element 96 (page 3) - UncategorizedText
+
+AGENT NO LONGER REPRESENTS CARRIER
+
+## Element 97 (page 3) - UncategorizedText
+
+|
+
+## Element 98 (page 3) - UncategorizedText
+
+|
+
+## Element 99 (page 3) - UncategorizedText
+
+CONDITION CORRECTED (Describe):
+
+## Element 100 (page 3) - UncategorizedText
+
+6.
+
+## Element 101 (page 3) - NarrativeText
+
+ANY PAST LOSSES OR CLAIMS RELATING TO SEXUAL ABUSE OR MOLESTATION ALLEGATIONS, DISCRIMINATION OR NEGLIGENT HIRING?
+
+## Element 102 (page 3) - ListItem
+
+7. DURING THE LAST FIVE YEARS (TEN IN RI), HAS ANY APPLICANT BEEN INDICTED FOR OR CONVICTED OF ANY DEGREE OF THE CRIME OF FRAUD, BRIBERY, ARSON OR ANY OTHER ARSON-RELATED CRIME IN CONNECTION WITH THIS OR ANY OTHER PROPERTY? (In RI, this question must be answered by any applicant for property insurance. Failure to disclose the existence of an arson conviction is a misdemeanor punishable by a sentence of up to one year of imprisonment).
+
+## Element 103 (page 3) - Table
+
+8. ANY UNCORRECTED FIRE AND/OR SAFETY CODE VIOLATIONS? OCCUR DATE EXPLANATION RESOLUTION 9. HAS APPLICANT HAD A FORECLOSURE, REPOSSESSION, BANKRUPTCY OR FILED FOR BANKRUPTCY DURING THE LAST FIVE (5) YEARS? OCCUR DATE EXPLANATION RESOLUTION 10. HAS APPLICANT HAD A JUDGEMENT OR LIEN DURING THE LAST FIVE (5) YEARS? OCCUR DATE EXPLANATION RESOLUTION 11. HAS BUSINESS BEEN PLACED IN A TRUST? NAME OF TRUST: 12. ANY FOREIGN OPERATIONS, FOREIGN PRODUCTS DISTRIBUTED IN USA, OR US PRODUCTS SOLD / DISTRIBUTED IN FOREIGN COUNTRIES? (If "YES", attach ACORD 815 for Liability Exposure and/or ACORD 816 for Property Exposure) 13. DOES APPLICANT HAVE OTHER BUSINESS VENTURES FOR WHICH COVERAGE IS NOT REQUESTED? 14. DOES APPLICANT OWN / LEASE / OPERATE ANY DRONES? (If "YES", describe use) 15. DOES APPLICANT HIRE OTHERS TO OPERATE DRONES? (If "YES", describe use) REMARKS / PROCESSING INSTRUCTIONS (ACORD 101, Additional Remarks Schedule, may be attached if more space is required) RESOLVE DATE RESOLVE DATE RESOLVE DATE
+
+## Element 104 (page 3) - Table
+
+PRIOR CARRIER INFORMATION YEAR CATEGORY GENERAL LIABILITY AUTOMOBILE PROPERTY OTHER: CARRIER POLICY NUMBER PREMIUM $ $ $ $ EFFECTIVE DATE EXPIRATION DATE
+
+## Element 105 (page 3) - NarrativeText
+
+ACORD 125 (2016/03)
+
+## Element 106 (page 3) - FigureCaption
+
+Page 3 of 4
+
+## Element 107 (page 3) - UncategorizedText
+
+Y / N
+
+## Element 108 (page 4) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 109 (page 4) - Header
+
+PRIOR CARRIER INFORMATION (continued)
+
+## Element 110 (page 4) - Table
+
+YEAR CATEGORY GENERAL LIABILITY AUTOMOBILE PROPERTY OTHER: CARRIER POLICY NUMBER PREMIUM $ $ $ $ EFFECTIVE DATE EXPIRATION DATE CARRIER POLICY NUMBER PREMIUM $ $ $ $ EFFECTIVE DATE EXPIRATION DATE
+
+## Element 111 (page 4) - UncategorizedText
+
+LOSS HISTORY
+
+## Element 112 (page 4) - Title
+
+Check if none (Attach Loss Summary for Additional Loss Information)
+
+## Element 113 (page 4) - UncategorizedText
+
+ENTER ALL CLAIMS OR LOSSES (REGARDLESS OF FAULT AND WHETHER OR NOT INSURED) OR OCCURRENCES THAT MAY GIVE RISE TO CLAIMS
+
+## Element 114 (page 4) - Table
+
+FOR THE LAST YEARS TOTAL LOSSES: $ SUBRO- CLAIM DATE OF OCCURRENCE LINE TYPE / DESCRIPTION OF OCCURRENCE OR CLAIM DATE OF CLAIM AMOUNT PAID AMOUNT RESERVED GATION Y / N OPEN Y / N
+
+## Element 115 (page 4) - Title
+
+SIGNATURE
+
+## Element 116 (page 4) - NarrativeText
+
+Copy of the Notice of Information Practices (Privacy) has been given to the applicant. (Not required in all states, contact your agent or broker for your state's requirements.)
+
+## Element 117 (page 4) - NarrativeText
+
+PERSONAL INFORMATION ABOUT YOU, INCLUDING INFORMATION FROM A CREDIT OR OTHER INVESTIGATIVE REPORT, MAY BE COLLECTED FROM PERSONS OTHER THAN YOU IN CONNECTION WITH THIS APPLICATION FOR INSURANCE AND SUBSEQUENT AMENDMENTS AND RENEWALS. SUCH INFORMATION AS WELL AS OTHER PERSONAL AND PRIVILEGED INFORMATION COLLECTED BY US OR OUR AGENTS MAY IN CERTAIN CIRCUMSTANCES BE DISCLOSED TO THIRD PARTIES WITHOUT YOUR AUTHORIZATION. CREDIT SCORING INFORMATION MAY BE USED TO HELP DETERMINE EITHER YOUR ELIGIBILITY FOR INSURANCE OR THE PREMIUM YOU WILL BE CHARGED. WE MAY USE A THIRD PARTY IN CONNECTION WITH THE DEVELOPMENT OF YOUR SCORE. YOU MAY HAVE THE RIGHT TO REVIEW YOUR PERSONAL INFORMATION IN OUR FILES AND REQUEST CORRECTION OF ANY INACCURACIES. YOU MAY ALSO HAVE THE RIGHT TO REQUEST IN WRITING THAT WE CONSIDER EXTRAORDINARY LIFE CIRCUMSTANCES IN CONNECTION WITH THE DEVELOPMENT OF YOUR CREDIT SCORE. THESE RIGHTS MAY BE LIMITED IN SOME STATES. PLEASE CONTACT YOUR AGENT OR BROKER TO LEARN HOW THESE RIGHTS MAY APPLY IN YOUR STATE OR FOR INSTRUCTIONS ON HOW TO SUBMIT A REQUEST TO US FOR A MORE DETAILED DESCRIPTION OF YOUR RIGHTS AND OUR PRACTICES REGARDING PERSONAL INFORMATION. (Not applicable in AZ, CA, DE, KS, MA, MN, ND, NY, OR, VA, or WV. Specific ACORD 38s are available for applicants in these states.) (Applicant's Initials):
+
+## Element 118 (page 4) - NarrativeText
+
+Applicable in AL, AR, DC, LA, MD, NM, RI and WV: Any person who knowingly (or willfully)* presents a false or fraudulent claim for payment of a loss or benefit or knowingly (or willfully)* presents false information in an application for insurance is guilty of a crime and may be subject to fines and confinement in prison. *Applies in MD Only.
+
+## Element 119 (page 4) - NarrativeText
+
+Applicable in CO: It is unlawful to knowingly provide false, incomplete, or misleading facts or information to an insurance company for the purpose of defrauding or attempting to defraud the company. Penalties may include imprisonment, fines, denial of insurance and civil damages. Any insurance company or agent of an insurance company who knowingly provides false, incomplete, or misleading facts or information to a policyholder or claimant for the purpose of defrauding or attempting to defraud the policyholder or claimant with regard to a settlement or award payable from insurance proceeds shall be reported to the Colorado Division of Insurance within the Department of Regulatory Agencies.
+
+## Element 120 (page 4) - NarrativeText
+
+Applicable in FL and OK: Any person who knowingly and with intent to injure, defraud, or deceive any insurer files a statement of claim or an application containing any false, incomplete, or misleading information is guilty of a felony (of the third degree)*. *Applies in FL Only.
+
+## Element 121 (page 4) - NarrativeText
+
+Applicable in KS: Any person who, knowingly and with intent to defraud, presents, causes to be presented or prepares with knowledge or belief that it will be presented to or by an insurer, purported insurer, broker or any agent thereof, any written statement as part of, or in support of, an application for the issuance of, or the rating of an insurance policy for personal or commercial insurance, or a claim for payment or other benefit pursuant to an insurance policy for commercial or personal insurance which such person knows to contain materially false information concerning any fact material thereto; or conceals, for the purpose of misleading, information concerning any fact material thereto commits a fraudulent insurance act.
+
+## Element 122 (page 4) - NarrativeText
+
+Applicable in KY, NY, OH and PA: Any person who knowingly and with intent to defraud any insurance company or other person files an application for insurance or statement of claim containing any materially false information or conceals for the purpose of misleading, information concerning any fact material thereto commits a fraudulent insurance act, which is a crime and subjects such person to criminal and civil penalties (not to exceed five thousand dollars and the stated value of the claim for each such violation)*. *Applies in NY Only.
+
+## Element 123 (page 4) - NarrativeText
+
+Applicable in ME, TN, VA and WA: It is a crime to knowingly provide false, incomplete or misleading information to an insurance company for the purpose of defrauding the company. Penalties (may)* include imprisonment, fines and denial of insurance benefits. *Applies in ME Only.
+
+## Element 124 (page 4) - NarrativeText
+
+Applicable in NJ: Any person who includes any false or misleading information on an application for an insurance policy is subject to criminal and civil penalties.
+
+## Element 125 (page 4) - NarrativeText
+
+Applicable in OR: Any person who knowingly and with intent to defraud or solicit another to defraud the insurer by submitting an application containing a false statement as to any material fact may be violating state law.
+
+## Element 126 (page 4) - NarrativeText
+
+Applicable in PR: Any person who knowingly and with the intention of defrauding presents false information in an insurance application, or presents, helps, or causes the presentation of a fraudulent claim for the payment of a loss or any other benefit, or presents more than one claim for the same damage or loss, shall incur a felony and, upon conviction, shall be sanctioned for each violation by a fine of not less than five thousand dollars ($5,000) and not more than ten thousand dollars ($10,000), or a fixed term of imprisonment for three (3) years, or both penalties. Should aggravating circumstances [be] present, the penalty thus established may be increased to a maximum of five (5) years, if extenuating circumstances are present, it may be reduced to a minimum of two (2) years.
+
+## Element 127 (page 4) - NarrativeText
+
+THE UNDERSIGNED IS AN AUTHORIZED REPRESENTATIVE OF THE APPLICANT AND REPRESENTS THAT REASONABLE INQUIRY HAS BEEN MADE TO OBTAIN THE ANSWERS TO QUESTIONS ON THIS APPLICATION. HE/SHE REPRESENTS THAT THE ANSWERS ARE TRUE, CORRECT AND COMPLETE TO THE BEST OF HIS/HER KNOWLEDGE.
+
+## Element 128 (page 4) - Table
+
+PRODUCER'S SIGNATURE PRODUCER'S NAME (Please Print) STATE PRODUCER LICENSE NO (Required in Florida) APPLICANT'S SIGNATURE DATE NATIONAL PRODUCER NUMBER
+
+## Element 129 (page 4) - Title
+
+ACORD 125 (2016/03)
+
+## Element 130 (page 4) - Footer
+
+Page 4 of 4
+
+## Element 131 (page 5) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 132 (page 5) - Image
+
+[Empty element]
+
+## Element 133 (page 5) - UncategorizedText
+
+DATE (MM/DD/YYYY)
+
+## Element 134 (page 5) - Title
+
+COMMERCIAL GENERAL LIABILITY SECTION
+
+## Element 135 (page 5) - Table
+
+CARRIER NAIC CODE EFFECTIVE DATE APPLICANT / FIRST NAMED INSURED
+
+## Element 136 (page 5) - NarrativeText
+
+NAIC CODE
+
+## Element 137 (page 5) - NarrativeText
+
+AGENCY
+
+## Element 138 (page 5) - NarrativeText
+
+POLICY NUMBER
+
+## Element 139 (page 5) - NarrativeText
+
+IMPORTANT - If CLAIMS MADE is checked in the COVERAGE / LIMITS section below, this is an application for a claims-made policy. Read all provisions of the policy carefully.
+
+## Element 140 (page 5) - Table
+
+COVERAGES LIMITS COMMERCIAL GENERAL LIABILITY GENERAL AGGREGATE $ PREMIUMS CLAIMS MADE OCCURRENCE LIMIT APPLIES PER: POLICY LOCATION PREMISES/OPERATIONS OWNER'S & CONTRACTOR'S PROTECTIVE PROJECT OTHER: PRODUCTS & COMPLETED OPERATIONS AGGREGATE $ PRODUCTS DEDUCTIBLES PERSONAL & ADVERTISING INJURY $ PROPERTY DAMAGE $ EACH OCCURRENCE $ OTHER BODILY INJURY $ PER CLAIM DAMAGE TO RENTED PREMISES (each occurrence) $ $ PER OCCURRENCE MEDICAL EXPENSE (Any one person) $ TOTAL EMPLOYEE BENEFITS $
+
+## Element 141 (page 5) - UncategorizedText
+
+$
+
+## Element 142 (page 5) - NarrativeText
+
+OTHER COVERAGES, RESTRICTIONS AND/OR ENDORSEMENTS (For hired/non-owned auto coverages attach the applicable state Business Auto Section, ACORD 137)
+
+## Element 143 (page 5) - Table
+
+IS IS NOT AVAILABLE. 2. MEDICAL PAYMENTS COVERAGE IS IS NOT AVAILABLE. SCHEDULE OF HAZARDS (ACORD 211, Schedule of Hazards, may be attached if more space is required) LOC # HAZ # CLASS CODE PREMIUM BASIS EXPOSURE TERR PREM / OPS RATE PRODUCTS PREM / OPS PREMIUM PRODUCTS
+
+## Element 144 (page 5) - UncategorizedText
+
+APPLICABLE ONLY IN WISCONSIN: IF NON-OWNED ONLY AUTO COVERAGE IS TO BE PROVIDED UNDER THE POLICY:
+
+## Element 145 (page 5) - UncategorizedText
+
+1. UM / UIM COVERAGE
+
+## Element 146 (page 5) - UncategorizedText
+
+CLASSIFICATION DESCRIPTION
+
+## Element 147 (page 5) - Table
+
+LOC # HAZ # CLASS CODE PREMIUM BASIS EXPOSURE TERR PREM / OPS RATE PRODUCTS PREM / OPS PREMIUM PRODUCTS
+
+## Element 148 (page 5) - UncategorizedText
+
+CLASSIFICATION DESCRIPTION
+
+## Element 149 (page 5) - Table
+
+LOC # HAZ # CLASS CODE PREMIUM BASIS EXPOSURE TERR PREM / OPS RATE PRODUCTS PREM / OPS PREMIUM PRODUCTS CLASSIFICATION DESCRIPTION RATING AND PREMIUM BASIS (P) PAYROLL - PER $1,000/PAY (C) TOTAL COST - PER $1,000/COST (U) UNIT - PER UNIT (S) GROSS SALES - PER $1,000/SALES (A) AREA - PER 1,000/SQ FT (M) ADMISSIONS - PER 1,000/ADM (T) OTHER CLAIMS MADE (Explain all "Yes" responses) EXPLAIN ALL "YES" RESPONSES 1. PROPOSED RETROACTIVE DATE: 2. ENTRY DATE INTO UNINTERRUPTED CLAIMS MADE COVERAGE: 3. HAS ANY PRODUCT, WORK, ACCIDENT, OR LOCATION BEEN EXCLUDED, UNINSURED OR SELF-INSURED FROM ANY PREVIOUS COVERAGE? 4. WAS TAIL COVERAGE PURCHASED UNDER ANY PREVIOUS POLICY? EMPLOYEE BENEFITS LIABILITY 1. DEDUCTIBLE PER CLAIM: $ 3. NUMBER OF EMPLOYEES COVERED BY EMPLOYEE BENEFITS PLANS: 2. NUMBER OF EMPLOYEES: 4. RETROACTIVE DATE: ACORD 126 (2016/09) Attach to ACORD 125 The ACORD name and logo are registered marks of ACORD
+
+## Element 150 (page 5) - UncategorizedText
+
+© 1993-2016 ACORD CORPORATION. All rights reserved.
+
+## Element 151 (page 5) - UncategorizedText
+
+Y / N
+
+## Element 152 (page 6) - Title
+
+CONTRACTORS
+
+## Element 153 (page 6) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 154 (page 6) - UncategorizedText
+
+EXPLAIN ALL "YES" RESPONSES (For all past or present operations)
+
+## Element 155 (page 6) - NarrativeText
+
+1. DOES APPLICANT DRAW PLANS, DESIGNS, OR SPECIFICATIONS FOR OTHERS?
+
+## Element 156 (page 6) - NarrativeText
+
+2. DO ANY OPERATIONS INCLUDE BLASTING OR UTILIZE OR STORE EXPLOSIVE MATERIAL?
+
+## Element 157 (page 6) - NarrativeText
+
+3. DO ANY OPERATIONS INCLUDE EXCAVATION, TUNNELING, UNDERGROUND WORK OR EARTH MOVING?
+
+## Element 158 (page 6) - UncategorizedText
+
+4. DO YOUR SUBCONTRACTORS CARRY COVERAGES OR LIMITS LESS THAN YOURS?
+
+## Element 159 (page 6) - NarrativeText
+
+5. ARE SUBCONTRACTORS ALLOWED TO WORK WITHOUT PROVIDING YOU WITH A CERTIFICATE OF INSURANCE?
+
+## Element 160 (page 6) - UncategorizedText
+
+6. DOES APPLICANT LEASE EQUIPMENT TO OTHERS WITH OR WITHOUT OPERATORS?
+
+## Element 161 (page 6) - UncategorizedText
+
+DESCRIBE THE TYPE OF WORK SUBCONTRACTED
+
+## Element 162 (page 6) - UncategorizedText
+
+$ PAID TO SUB-
+
+## Element 163 (page 6) - UncategorizedText
+
+CONTRACTORS:
+
+## Element 164 (page 6) - UncategorizedText
+
+CONTRACTORS:
+
+## Element 165 (page 6) - UncategorizedText
+
+% OF WORK
+
+## Element 166 (page 6) - UncategorizedText
+
+SUBCONTRACTED:
+
+## Element 167 (page 6) - UncategorizedText
+
+SUBCONTRACTED:
+
+## Element 168 (page 6) - UncategorizedText
+
+# FULL-
+
+## Element 169 (page 6) - UncategorizedText
+
+TIME STAFF:
+
+## Element 170 (page 6) - UncategorizedText
+
+# PART-
+
+## Element 171 (page 6) - UncategorizedText
+
+TIME STAFF:
+
+## Element 172 (page 6) - Table
+
+PRODUCTS / COMPLETED OPERATIONS PRODUCTS ANNUAL GROSS SALES # OF UNITS TIME IN MARKET EXPECTED LIFE INTENDED USE EXPLAIN ALL "YES" RESPONSES (For all past or present products or operations) PLEASE ATTACH LITERATURE, BROCHURES, LABELS, WARNINGS, ETC. 1. DOES APPLICANT INSTALL, SERVICE OR DEMONSTRATE PRODUCTS? 2. FOREIGN PRODUCTS SOLD, DISTRIBUTED, USED AS COMPONENTS? (If "YES", attach ACORD 815) 3. RESEARCH AND DEVELOPMENT CONDUCTED OR NEW PRODUCTS PLANNED? 4. GUARANTEES, WARRANTIES, HOLD HARMLESS AGREEMENTS? 5. PRODUCTS RELATED TO AIRCRAFT/SPACE INDUSTRY? 6. PRODUCTS RECALLED, DISCONTINUED, CHANGED? 7. PRODUCTS OF OTHERS SOLD OR RE-PACKAGED UNDER APPLICANT LABEL? 8. PRODUCTS UNDER LABEL OF OTHERS? 9. VENDORS COVERAGE REQUIRED? 10. DOES ANY NAMED INSURED SELL TO OTHER NAMED INSUREDS? PRINCIPAL COMPONENTS
+
+## Element 173 (page 6) - NarrativeText
+
+ACORD 126 (2016/09)
+
+## Element 174 (page 6) - FigureCaption
+
+Page 2 of 4
+
+## Element 175 (page 6) - Header
+
+Y / N
+
+## Element 176 (page 6) - UncategorizedText
+
+Y / N
+
+## Element 177 (page 7) - UncategorizedText
+
+AGENCY CUSTOMER ID:
+
+## Element 178 (page 7) - Table
+
+ACORD 45 attached for additional names NAME AND ADDRESS RANK: EVIDENCE: CERTIFICATE INTEREST IN ITEM NUMBER ADDITIONAL INSURED LOCATION: BUILDING: EMPLOYEE AS LESSOR ITEM CLASS: ITEM: LENDER'S LOSS PAYABLE ITEM DESCRIPTION LIENHOLDER LOSS PAYEE MORTGAGEE REFERENCE / LOAN #: 1. ANY MEDICAL FACILITIES PROVIDED OR MEDICAL PROFESSIONALS EMPLOYED OR CONTRACTED? 3. DO/HAVE PAST, PRESENT OR DISCONTINUED OPERATIONS INVOLVE(D) STORING, TREATING, DISCHARGING, APPLYING, DISPOSING, OR TRANSPORTING OF HAZARDOUS MATERIAL? (e.g. landfills, wastes, fuel tanks, etc) 4. ANY OPERATIONS SOLD, ACQUIRED, OR DISCONTINUED IN LAST FIVE (5) YEARS? DO YOU RENT OR LOAN EQUIPMENT TO OTHERS? EQUIPMENT TYPE OF EQUIPMENT INSTRUCTION GIVEN (Y/N) SMALL TOOLS LARGE EQUIPMENT SMALL TOOLS LARGE EQUIPMENT
+
+## Element 179 (page 7) - UncategorizedText
+
+ADDITIONAL INTEREST / CERTIFICATE RECIPIENT
+
+## Element 180 (page 7) - UncategorizedText
+
+INTEREST
+
+## Element 181 (page 7) - UncategorizedText
+
+GENERAL INFORMATION
+
+## Element 182 (page 7) - UncategorizedText
+
+EXPLAIN ALL "YES" RESPONSES (For all past or present operations)
+
+## Element 183 (page 7) - UncategorizedText
+
+2. ANY EXPOSURE TO RADIOACTIVE/NUCLEAR MATERIALS?
+
+## Element 184 (page 7) - UncategorizedText
+
+5.
+
+## Element 185 (page 7) - UncategorizedText
+
+6. ANY WATERCRAFT, DOCKS, FLOATS OWNED, HIRED OR LEASED?
+
+## Element 186 (page 7) - UncategorizedText
+
+7. ANY PARKING FACILITIES OWNED/RENTED?
+
+## Element 187 (page 7) - UncategorizedText
+
+8. IS A FEE CHARGED FOR PARKING?
+
+## Element 188 (page 7) - UncategorizedText
+
+9. RECREATION FACILITIES PROVIDED?
+
+## Element 189 (page 7) - UncategorizedText
+
+10.
+
+## Element 190 (page 7) - UncategorizedText
+
+ARE THERE ANY LODGING OPERATIONS INCLUDING APARTMENTS? (If "YES", answer the following):
+
+## Element 191 (page 7) - UncategorizedText
+
+# APTS
+
+## Element 192 (page 7) - UncategorizedText
+
+TOTAL APT AREA
+
+## Element 193 (page 7) - UncategorizedText
+
+DESCRIBE OTHER LODGING OPERATIONS
+
+## Element 194 (page 7) - UncategorizedText
+
+Sq. Ft.
+
+## Element 195 (page 7) - UncategorizedText
+
+11.
+
+## Element 196 (page 7) - UncategorizedText
+
+IS THERE A SWIMMING POOL ON PREMISES? (Check all that apply)
+
+## Element 197 (page 7) - UncategorizedText
+
+APPROVED FENCE
+
+## Element 198 (page 7) - UncategorizedText
+
+||
+
+## Element 199 (page 7) - UncategorizedText
+
+LIMITED ACCESS
+
+## Element 200 (page 7) - UncategorizedText
+
+||
+
+## Element 201 (page 7) - UncategorizedText
+
+DIVING BOARD
+
+## Element 202 (page 7) - UncategorizedText
+
+||
+
+## Element 203 (page 7) - UncategorizedText
+
+SLIDE
+
+## Element 204 (page 7) - UncategorizedText
+
+||
+
+## Element 205 (page 7) - UncategorizedText
+
+ABOVE GROUND
+
+## Element 206 (page 7) - UncategorizedText
+
+||
+
+## Element 207 (page 7) - UncategorizedText
+
+IN GROUND
+
+## Element 208 (page 7) - UncategorizedText
+
+||
+
+## Element 209 (page 7) - UncategorizedText
+
+LIFE GUARD
+
+## Element 210 (page 7) - UncategorizedText
+
+12.
+
+## Element 211 (page 7) - UncategorizedText
+
+ARE SOCIAL EVENTS SPONSORED?
+
+## Element 212 (page 7) - Table
+
+ARE ATHLETIC TEAMS SPONSORED? TYPE OF SPORT CONTACT SPORT (Y/N) AGE GROUP 13 - 18 TYPE OF SPORT CONTACT SPORT (Y/N) AGE GROUP 13 - 18 12 & UNDER OVER 18 12 & UNDER OVER 18 EXTENT OF SPONSORSHIP: EXTENT OF SPONSORSHIP:
+
+## Element 213 (page 7) - UncategorizedText
+
+13.
+
+## Element 214 (page 7) - UncategorizedText
+
+14.
+
+## Element 215 (page 7) - UncategorizedText
+
+ANY STRUCTURAL ALTERATIONS CONTEMPLATED?
+
+## Element 216 (page 7) - UncategorizedText
+
+15.
+
+## Element 217 (page 7) - UncategorizedText
+
+ANY DEMOLITION EXPOSURE CONTEMPLATED?
+
+## Element 218 (page 7) - NarrativeText
+
+ACORD 126 (2016/09)
+
+## Element 219 (page 7) - FigureCaption
+
+Page 3 of 4
+
+## Element 220 (page 7) - UncategorizedText
+
+Y / N
+
+## Element 221 (page 8) - Header
+
+GENERAL INFORMATION (continued)
+
+## Element 222 (page 8) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 223 (page 8) - NarrativeText
+
+EXPLAIN ALL "YES" RESPONSES (For all past or present operations)
+
+## Element 224 (page 8) - NarrativeText
+
+16. HAS APPLICANT BEEN ACTIVE IN OR IS CURRENTLY ACTIVE IN JOINT VENTURES?
+
+## Element 225 (page 8) - Table
+
+DO YOU LEASE EMPLOYEES TO OR FROM OTHER EMPLOYERS? WORKERS WORKERS LEASE TO COMPENSATION COVERAGE CARRIED (Y/N) LEASE FROM COMPENSATION COVERAGE CARRIED (Y/N)
+
+## Element 226 (page 8) - UncategorizedText
+
+17.
+
+## Element 227 (page 8) - NarrativeText
+
+18. IS THERE A LABOR INTERCHANGE WITH ANY OTHER BUSINESS OR SUBSIDIARIES?
+
+## Element 228 (page 8) - UncategorizedText
+
+19. ARE DAY CARE FACILITIES OPERATED OR CONTROLLED?
+
+## Element 229 (page 8) - NarrativeText
+
+20. HAVE ANY CRIMES OCCURRED OR BEEN ATTEMPTED ON YOUR PREMISES WITHIN THE LAST THREE (3) YEARS?
+
+## Element 230 (page 8) - NarrativeText
+
+21. IS THERE A FORMAL, WRITTEN SAFETY AND SECURITY POLICY IN EFFECT?
+
+## Element 231 (page 8) - NarrativeText
+
+22. DOES THE BUSINESSES' PROMOTIONAL LITERATURE MAKE ANY REPRESENTATIONS ABOUT THE SAFETY OR SECURITY OF THE PREMISES?
+
+## Element 232 (page 8) - Title
+
+REMARKS (ACORD 101, Additional Remarks Schedule, may be attached if more space is required)
+
+## Element 233 (page 8) - UncategorizedText
+
+a
+
+## Element 234 (page 8) - UncategorizedText
+
+= —
+
+## Element 235 (page 8) - UncategorizedText
+
+7
+
+## Element 236 (page 8) - Title
+
+SIGNATURE
+
+## Element 237 (page 8) - NarrativeText
+
+Applicable in AL, AR, DC, LA, MD, NM, RI and WV: Any person who knowingly (or willfully)* presents a false or fraudulent claim for payment of a loss or benefit or knowingly (or willfully)* presents false information in an application for insurance is guilty of a crime and may be subject to fines and confinement in prison. *Applies in MD Only.
+
+## Element 238 (page 8) - NarrativeText
+
+Applicable in CO: It is unlawful to knowingly provide false, incomplete, or misleading facts or information to an insurance company for the purpose of defrauding or attempting to defraud the company. Penalties may include imprisonment, fines, denial of insurance and civil damages. Any insurance company or agent of an insurance company who knowingly provides false, incomplete, or misleading facts or information to a policyholder or claimant for the purpose of defrauding or attempting to defraud the policyholder or claimant with regard to a settlement or award payable from insurance proceeds shall be reported to the Colorado Division of Insurance within the Department of Regulatory Agencies.
+
+## Element 239 (page 8) - NarrativeText
+
+Applicable in FL and OK: Any person who knowingly and with intent to injure, defraud, or deceive any insurer files a statement of claim or an application containing any false, incomplete, or misleading information is guilty of a felony (of the third degree)*. *Applies in FL Only.
+
+## Element 240 (page 8) - NarrativeText
+
+Applicable in KS: Any person who, knowingly and with intent to defraud, presents, causes to be presented or prepares with knowledge or belief that it will be presented to or by an insurer, purported insurer, broker or any agent thereof, any written, electronic, electronic impulse, facsimile, magnetic, oral, or telephonic communication or statement as part of, or in support of, an application for the issuance of, or the rating of an insurance policy for personal or commercial insurance, or a claim for payment or other benefit pursuant to an insurance policy for commercial or personal insurance which such person knows to contain materially false information concerning any fact material thereto; or conceals, for the purpose of misleading, information concerning any fact material thereto commits a fraudulent insurance act.
+
+## Element 241 (page 8) - NarrativeText
+
+Applicable in KY, NY, OH and PA: Any person who knowingly and with intent to defraud any insurance company or other person files an application for insurance or statement of claim containing any materially false information or conceals for the purpose of misleading, information concerning any fact material thereto commits a fraudulent insurance act, which is a crime and subjects such person to criminal and civil penalties (not to exceed five thousand dollars and the stated value of the claim for each such violation)*. *Applies in NY Only.
+
+## Element 242 (page 8) - NarrativeText
+
+Applicable in ME, TN, VA and WA: It is a crime to knowingly provide false, incomplete or misleading information to an insurance company for the purpose of defrauding the company. Penalties (may)* include imprisonment, fines and denial of insurance benefits. *Applies in ME Only. Applicable in NJ: Any person who includes any false or misleading information on an application for an insurance policy is subject to criminal and civil
+
+## Element 243 (page 8) - UncategorizedText
+
+penalties.
+
+## Element 244 (page 8) - NarrativeText
+
+Applicable in OR: Any person who knowingly and with intent to defraud or solicit another to defraud the insurer by submitting an application containing a false statement as to any material fact may be violating state law.
+
+## Element 245 (page 8) - NarrativeText
+
+Applicable in PR: Any person who knowingly and with the intention of defrauding presents false information in an insurance application, or presents, helps, or causes the presentation of a fraudulent claim for the payment of a loss or any other benefit, or presents more than one claim for the same damage or loss, shall incur a felony and, upon conviction, shall be sanctioned for each violation by a fine of not less than five thousand dollars ($5,000) and not more than ten thousand dollars ($10,000), or a fixed term of imprisonment for three (3) years, or both penalties. Should aggravating circumstances [be] present, the penalty thus established may be increased to a maximum of five (5) years, if extenuating circumstances are present, it may be reduced to a minimum of two (2) years.
+
+## Element 246 (page 8) - NarrativeText
+
+THE UNDERSIGNED IS AN AUTHORIZED REPRESENTATIVE OF THE APPLICANT AND REPRESENTS THAT REASONABLE INQUIRY HAS BEEN MADE TO OBTAIN THE ANSWERS TO QUESTIONS ON THIS APPLICATION. HE/SHE REPRESENTS THAT THE ANSWERS ARE TRUE, CORRECT AND COMPLETE TO THE BEST OF HIS/HER KNOWLEDGE.
+
+## Element 247 (page 8) - Table
+
+PRODUCER'S SIGNATURE PRODUCER'S NAME (Please Print) STATE PRODUCER LICENSE NO (Required in Florida) APPLICANT'S SIGNATURE DATE NATIONAL PRODUCER NUMBER
+
+## Element 248 (page 8) - Title
+
+ACORD 126 (2016/09)
+
+## Element 249 (page 8) - FigureCaption
+
+Page 4 of 4
+
+## Element 250 (page 8) - UncategorizedText
+
+Y / N
+
+## Element 251 (page 9) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 252 (page 9) - Image
+
+—~) @ ACORD
+
+## Element 253 (page 9) - Title
+
+PROPERTY SECTION
+
+## Element 254 (page 9) - UncategorizedText
+
+DATE (MM/DD/YYYY)
+
+## Element 255 (page 9) - FigureCaption
+
+AGENCY NAME
+
+## Element 256 (page 9) - UncategorizedText
+
+CARRIER
+
+## Element 257 (page 9) - UncategorizedText
+
+NAIC CODE
+
+## Element 258 (page 9) - UncategorizedText
+
+POLICY NUMBER
+
+## Element 259 (page 9) - UncategorizedText
+
+EFFECTIVE DATE
+
+## Element 260 (page 9) - UncategorizedText
+
+|
+
+## Element 261 (page 9) - UncategorizedText
+
+NAMED INSURED(S)
+
+## Element 262 (page 9) - Table
+
+BLANKET SUMMARY BLKT # AMOUNT TYPE BLKT # AMOUNT TYPE PREMISES #: STREET ADDRESS: PREMISES INFORMATION BUILDING #: BLDG DESCRIPTION: SUBJECT OF INSURANCE AMOUNT COINS % VALU- ATION CAUSES OF LOSS INFLATION GUARD % DED DED TYPE BLKT # FORMS AND CONDITIONS TO APPLY ADDITIONAL INFORMATION BUSINESS INCOME / EXTRA EXPENSE - Attach ACORD 810 VALUE REPORTING INFORMATION - Attach ACORD 811
+
+## Element 263 (page 9) - UncategorizedText
+
+ADDITIONAL COVERAGES, OPTIONS, RESTRICTIONS, ENDORSEMENTS AND RATING INFORMATION
+
+## Element 264 (page 9) - Table
+
+(Y / N) DESCRIPTION OF PROPERTY COVERED LIMIT $ DEDUCTIBLE REFRIG MAINT AGREEMENT (Y / N) OPTIONS BREAKDOWN OR CONTAMINATION POWER OUTAGE SELLING PRICE $ ACCEPT COVERAGE REJECT COVERAGE LIMIT: $ ACCEPT COVERAGE REJECT COVERAGE LIMIT: $
+
+## Element 265 (page 9) - UncategorizedText
+
+SPOILAGE
+
+## Element 266 (page 9) - UncategorizedText
+
+COVERAGE
+
+## Element 267 (page 9) - UncategorizedText
+
+SINKHOLE COVERAGE (Required in Florida)
+
+## Element 268 (page 9) - UncategorizedText
+
+MINE SUBSIDENCE COVERAGE (Required in IL, IN, KY and WV)
+
+## Element 269 (page 9) - UncategorizedText
+
+PROPERTY HAS BEEN DESIGNATED AN HISTORICAL LANDMARK
+
+## Element 270 (page 9) - UncategorizedText
+
+# OF OPEN SIDES ON STRUCTURE:
+
+## Element 271 (page 9) - Table
+
+DISTANCE TO HYDRANT FIRE STAT FIRE DISTRICT CODE NUMBER PROT CL # STORIES # BASM'TS YR BUILT TOTAL AREA FT MI BLDG CODE GRADE TAX CODE ROOF TYPE OTHER OCCUPANCIES WIRING, YR: PLUMBING, YR: ROOFING, YR: HEATING, YR: WIND CLASS SEMI- RESISTIVE HEATING SOURCE INCL WOODBURNING STOVE OR FIREPLACE INSERT DATE INSTALLED: OTHER: YR: RESISTIVE MANUFACTURER: SECONDARY HEAT BOILER SOLID FUEL BOILER SOLID FUEL IF BOILER, IS INSURANCE PLACED ELSEWHERE? Y / N IF BOILER, IS INSURANCE PLACED ELSEWHERE? Y / N LEFT EXPOSURE & DISTANCE FRONT EXPOSURE & DISTANCE REAR EXPOSURE & DISTANCE CERTIFICATE # EXPIRATION DATE CENTRAL STATION WITH KEYS EXTENT GRADE # GUARDS / WATCHMEN CLOCK HOURLY % SPRNK FIRE ALARM MANUFACTURER LOCAL GONG ACORD 45 attached for additional names NAME AND ADDRESS RANK: EVIDENCE: CERTIFICATE INTEREST IN ITEM NUMBER LENDER'S LOSS PAYABLE LOCATION: BUILDING: LOSS PAYEE ITEM CLASS: ITEM: MORTGAGEE ITEM DESCRIPTION REFERENCE / LOAN #:
+
+## Element 272 (page 9) - UncategorizedText
+
+CONSTRUCTION TYPE
+
+## Element 273 (page 9) - UncategorizedText
+
+BUILDING IMPROVEMENTS
+
+## Element 274 (page 9) - UncategorizedText
+
+PRIMARY HEAT
+
+## Element 275 (page 9) - UncategorizedText
+
+RIGHT EXPOSURE & DISTANCE
+
+## Element 276 (page 9) - UncategorizedText
+
+BURGLAR ALARM TYPE
+
+## Element 277 (page 9) - UncategorizedText
+
+BURGLAR ALARM INSTALLED AND SERVICED BY
+
+## Element 278 (page 9) - UncategorizedText
+
+PREMISES FIRE PROTECTION (Sprinklers, Standpipes, CO2 / Chemical Systems)
+
+## Element 279 (page 9) - UncategorizedText
+
+ADDITIONAL INTEREST
+
+## Element 280 (page 9) - UncategorizedText
+
+INTEREST
+
+## Element 281 (page 9) - UncategorizedText
+
+LOCAL
+
+## Element 282 (page 9) - UncategorizedText
+
+GONG
+
+## Element 283 (page 9) - UncategorizedText
+
+CENTRAL STATION
+
+## Element 284 (page 9) - UncategorizedText
+
+ACORD 140 (2016/03)
+
+## Element 285 (page 9) - UncategorizedText
+
+Attach to ACORD 125
+
+## Element 286 (page 9) - UncategorizedText
+
+© 1985-2015 ACORD CORPORATION. All rights reserved.
+
+## Element 287 (page 9) - UncategorizedText
+
+The ACORD name and logo are registered marks of ACORD
+
+## Element 288 (page 10) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 289 (page 10) - UncategorizedText
+
+ADDITIONAL
+
+## Element 290 (page 10) - UncategorizedText
+
+PREMISES #:
+
+## Element 291 (page 10) - UncategorizedText
+
+STREET ADDRESS:
+
+## Element 292 (page 10) - Table
+
+PREMISES INFORMATION BUILDING #: BLDG DESCRIPTION: SUBJECT OF INSURANCE AMOUNT COINS % VALU- ATION CAUSES OF LOSS INFLATION GUARD % DED DED TYPE BLKT # FORMS AND CONDITIONS TO APPLY ADDITIONAL INFORMATION BUSINESS INCOME / EXTRA EXPENSE - Attach ACORD 810 VALUE REPORTING INFORMATION - Attach ACORD 811 ADDITIONAL COVERAGES, OPTIONS, RESTRICTIONS, ENDORSEMENTS AND RATING INFORMATION SPOILAGE DESCRIPTION OF PROPERTY COVERED LIMIT REFRIG MAINT OPTIONS
+
+## Element 293 (page 10) - Table
+
+SPOILAGE DESCRIPTION OF PROPERTY COVERED LIMIT REFRIG MAINT OPTIONS (Y / N) $ DEDUCTIBLE AGREEMENT (Y / N) BREAKDOWN OR CONTAMINATION POWER OUTAGE SELLING PRICE $ ACCEPT COVERAGE REJECT COVERAGE LIMIT: $ ACCEPT COVERAGE REJECT COVERAGE LIMIT: $ PROPERTY HAS BEEN DESIGNATED AN HISTORICAL LANDMARK # OF OPEN SIDES ON STRUCTURE:
+
+## Element 294 (page 10) - UncategorizedText
+
+OPTIONS
+
+## Element 295 (page 10) - UncategorizedText
+
+DESCRIPTION OF PROPERTY COVERED
+
+## Element 296 (page 10) - UncategorizedText
+
+LIMIT
+
+## Element 297 (page 10) - UncategorizedText
+
+SPOILAGE
+
+## Element 298 (page 10) - UncategorizedText
+
+REFRIG MAINT
+
+## Element 299 (page 10) - UncategorizedText
+
+COVERAGE
+
+## Element 300 (page 10) - UncategorizedText
+
+SINKHOLE COVERAGE (Required in Florida)
+
+## Element 301 (page 10) - UncategorizedText
+
+MINE SUBSIDENCE COVERAGE (Required in IL, IN, KY and WV)
+
+## Element 302 (page 10) - Table
+
+DISTANCE TO HYDRANT FIRE STAT FIRE DISTRICT CODE NUMBER PROT CL # STORIES # BASM'TS YR BUILT TOTAL AREA FT MI BUILDING IMPROVEMENTS BLDG CODE GRADE TAX CODE ROOF TYPE OTHER OCCUPANCIES WIRING, YR: PLUMBING, YR: ROOFING, YR: HEATING, YR: WIND CLASS SEMI- RESISTIVE HEATING SOURCE INCL WOODBURNING STOVE OR FIREPLACE INSERT DATE INSTALLED: OTHER: YR: RESISTIVE MANUFACTURER: SECONDARY HEAT BOILER SOLID FUEL BOILER SOLID FUEL IF BOILER, IS INSURANCE PLACED ELSEWHERE? Y / N IF BOILER, IS INSURANCE PLACED ELSEWHERE? Y / N RIGHT EXPOSURE & DISTANCE LEFT EXPOSURE & DISTANCE FRONT EXPOSURE & DISTANCE REAR EXPOSURE & DISTANCE CERTIFICATE # EXPIRATION DATE CENTRAL STATION GONG WITH KEYS BURGLAR ALARM INSTALLED AND SERVICED BY EXTENT GRADE # GUARDS / WATCHMEN CLOCK HOURLY PREMISES FIRE PROTECTION (Sprinklers, Standpipes, CO2 / Chemical Systems) % SPRNK FIRE ALARM MANUFACTURER LOCAL GONG ADDITIONAL INTEREST ACORD 45 attached for additional names NAME AND ADDRESS RANK: EVIDENCE: CERTIFICATE INTEREST IN ITEM NUMBER LENDER'S LOSS PAYABLE LOCATION: BUILDING: LOSS PAYEE ITEM CLASS: ITEM: MORTGAGEE ITEM DESCRIPTION REFERENCE / LOAN #:
+
+## Element 303 (page 10) - UncategorizedText
+
+CONSTRUCTION TYPE
+
+## Element 304 (page 10) - UncategorizedText
+
+PRIMARY HEAT
+
+## Element 305 (page 10) - UncategorizedText
+
+BURGLAR ALARM TYPE
+
+## Element 306 (page 10) - UncategorizedText
+
+INTEREST
+
+## Element 307 (page 10) - UncategorizedText
+
+LOCAL
+
+## Element 308 (page 10) - UncategorizedText
+
+CENTRAL STATION
+
+## Element 309 (page 10) - UncategorizedText
+
+REMARKS (ACORD 101, Additional Remarks Schedule, may be attached if more space is required)
+
+## Element 310 (page 10) - NarrativeText
+
+ACORD 140 (2016/03)
+
+## Element 311 (page 10) - Title
+
+Page 2 of 3
+
+## Element 312 (page 11) - Header
+
+SIGNATURE
+
+## Element 313 (page 11) - Header
+
+AGENCY CUSTOMER ID:
+
+## Element 314 (page 11) - Title
+
+Applicable in AL, AR, DC, LA, MD, NM, RI and WV
+
+## Element 315 (page 11) - NarrativeText
+
+Any person who knowingly (or willfully)* presents a false or fraudulent claim for payment of a loss or benefit or knowingly (or willfully)* presents false information in an application for insurance is guilty of a crime and may be subject to fines and confinement in prison. *Applies in MD Only.
+
+## Element 316 (page 11) - Title
+
+Applicable in CO
+
+## Element 317 (page 11) - NarrativeText
+
+It is unlawful to knowingly provide false, incomplete, or misleading facts or information to an insurance company for the purpose of defrauding or attempting to defraud the company. Penalties may include imprisonment, fines, denial of insurance and civil damages. Any insurance company or agent of an insurance company who knowingly provides false, incomplete, or misleading facts or information to a policyholder or claimant for the purpose of defrauding or attempting to defraud the policyholder or claimant with regard to a settlement or award payable from insurance proceeds shall be reported to the Colorado Division of Insurance within the Department of Regulatory Agencies.
+
+## Element 318 (page 11) - Title
+
+Applicable in FL and OK
+
+## Element 319 (page 11) - NarrativeText
+
+Any person who knowingly and with intent to injure, defraud, or deceive any insurer files a statement of claim or an application containing any false, incomplete, or misleading information is guilty of a felony (of the third degree)*. *Applies in FL Only.
+
+## Element 320 (page 11) - Title
+
+Applicable in KS
+
+## Element 321 (page 11) - NarrativeText
+
+Any person who, knowingly and with intent to defraud, presents, causes to be presented or prepares with knowledge or belief that it will be presented to or by an insurer, purported insurer, broker or any agent thereof, any written statement as part of, or in support of, an application for the issuance of, or the rating of an insurance policy for personal or commercial insurance, or a claim for payment or other benefit pursuant to an insurance policy for commercial or personal insurance which such person knows to contain materially false information concerning any fact material thereto; or conceals, for the purpose of misleading, information concerning any fact material thereto commits a fraudulent insurance act.
+
+## Element 322 (page 11) - Title
+
+Applicable in KY, NY, OH and PA
+
+## Element 323 (page 11) - NarrativeText
+
+Any person who knowingly and with intent to defraud any insurance company or other person files an application for insurance or statement of claim containing any materially false information or conceals for the purpose of misleading, information concerning any fact material thereto commits a fraudulent insurance act, which is a crime and subjects such person to criminal and civil penalties* (not to exceed five thousand dollars and the stated value of the claim for each such violation)*. *Applies in NY Only.
+
+## Element 324 (page 11) - Title
+
+Applicable in ME, TN, VA and WA
+
+## Element 325 (page 11) - NarrativeText
+
+It is a crime to knowingly provide false, incomplete or misleading information to an insurance company for the purpose of defrauding the company. Penalties (may)* include imprisonment, fines and denial of insurance benefits. *Applies in ME Only.
+
+## Element 326 (page 11) - Title
+
+Applicable in NJ
+
+## Element 327 (page 11) - NarrativeText
+
+Any person who includes any false or misleading information on an application for an insurance policy is subject to criminal and civil penalties.
+
+## Element 328 (page 11) - Title
+
+Applicable in OR
+
+## Element 329 (page 11) - NarrativeText
+
+Any person who knowingly and with intent to defraud or solicit another to defraud the insurer by submitting an application containing a false statement as to any material fact may be violating state law.
+
+## Element 330 (page 11) - Title
+
+Applicable in PR
+
+## Element 331 (page 11) - NarrativeText
+
+Any person who knowingly and with the intention of defrauding presents false information in an insurance application, or presents, helps, or causes the presentation of a fraudulent claim for the payment of a loss or any other benefit, or presents more than one claim for the same damage or loss, shall incur a felony and, upon conviction, shall be sanctioned for each violation by a fine of not less than five thousand dollars ($5,000) and not more than ten thousand dollars ($10,000), or a fixed term of imprisonment for three (3) years, or both penalties. Should aggravating circumstances [be] present, the penalty thus established may be increased to a maximum of five (5) years, if extenuating circumstances are present, it may be reduced to a minimum of two (2) years.
+
+## Element 332 (page 11) - NarrativeText
+
+THE UNDERSIGNED IS AN AUTHORIZED REPRESENTATIVE OF THE APPLICANT AND REPRESENTS THAT REASONABLE INQUIRY HAS BEEN MADE TO OBTAIN THE ANSWERS TO QUESTIONS ON THIS APPLICATION. HE/SHE REPRESENTS THAT THE ANSWERS ARE TRUE, CORRECT AND COMPLETE TO THE BEST OF HIS/HER KNOWLEDGE.
+
+## Element 333 (page 11) - Table
+
+PRODUCER'S SIGNATURE PRODUCER'S NAME (Please Print) STATE PRODUCER LICENSE NO (Required in Florida) APPLICANT'S SIGNATURE DATE NATIONAL PRODUCER NUMBER
+
+## Element 334 (page 11) - NarrativeText
+
+ACORD 140 (2016/03)
+
+## Element 335 (page 11) - FigureCaption
+
+Page 3 of 3
