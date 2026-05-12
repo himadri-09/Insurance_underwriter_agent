@@ -357,27 +357,30 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
     # ══════════════════════════════════════════════════
 
     non_renewal = False
-    non_renewal_count = 0
-    non_renewal_carriers = []
+    non_renewal_carriers_raw = []
     for pi in premiums:
         if pi.cancelled_by_carrier:
             non_renewal = True
-            non_renewal_count += 1
-            non_renewal_carriers.append(pi.carrier)
+            non_renewal_carriers_raw.append(pi.carrier)
 
     if any(kw in notes_lower for kw in ["non-renew", "nonrenew", "non-renewal", "cancelled by", "will not renew"]):
         non_renewal = True
 
     # Try to extract carrier name from notes
-    if non_renewal and not non_renewal_carriers:
+    if non_renewal and not non_renewal_carriers_raw:
         for carrier_name in ["Hartford", "Travelers", "Zurich", "EMC", "Progressive", "Texas Mutual", "Liberty Mutual", "Chubb", "AIG"]:
             if carrier_name.lower() in notes_lower:
-                non_renewal_carriers.append(carrier_name)
+                non_renewal_carriers_raw.append(carrier_name)
+
+    # NORMALIZE carrier names — strip suffixes and de-duplicate
+    # Hartford Financial Services + Hartford Financial Services Group = Hartford
+    non_renewal_carriers = list(set(_normalize_carrier(c) for c in non_renewal_carriers_raw if c))
+    non_renewal_count = len(non_renewal_carriers)
 
     analytics["carrier"] = {
         "non_renewal": non_renewal,
-        "non_renewal_count": max(non_renewal_count, len(non_renewal_carriers)),
-        "non_renewal_carriers": list(set(non_renewal_carriers)),
+        "non_renewal_count": non_renewal_count,
+        "non_renewal_carriers": non_renewal_carriers,
     }
 
     # ══════════════════════════════════════════════════
@@ -537,3 +540,42 @@ def _normalize_date(date_str: Optional[str]) -> Optional[str]:
     except Exception:
         pass
     return date_str.strip()
+
+
+def _normalize_carrier(name: str) -> str:
+    """Normalize carrier names so Hartford Financial Services == Hartford.
+    
+    Strips common suffixes and applies known aliases.
+    Returns deduplicated carrier name for counting.
+    """
+    if not name:
+        return name
+    
+    # Strip common suffixes
+    suffixes = [
+        " Financial Services Group", " Financial Services", 
+        " Insurance Company", " Insurance Companies", 
+        " Insurance Group", " Insurance Co",
+        " North America", " Group", " Inc.", " Inc", 
+        " LLC", " Corp", " Corporation", " Company", 
+        " Companies", " Mutual",
+    ]
+    normalized = name.strip()
+    for suffix in suffixes:
+        if normalized.lower().endswith(suffix.lower()):
+            normalized = normalized[:len(normalized) - len(suffix)].strip()
+    
+    # Known aliases
+    aliases = {
+        "the hartford": "Hartford",
+        "hartford": "Hartford",
+        "travelers": "Travelers",
+        "zurich": "Zurich",
+        "emc": "EMC",
+        "employers mutual": "EMC",
+        "progressive commercial": "Progressive",
+        "progressive": "Progressive",
+        "texas mutual": "Texas Mutual",
+    }
+    lower = normalized.lower()
+    return aliases.get(lower, normalized)

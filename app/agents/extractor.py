@@ -163,6 +163,8 @@ class ExtractorAgent:
         result["_source_doc"] = filename
         result["_doc_type"] = doc_type
         result["_confidence"] = confidence
+        # Store raw markdown for premium text scanning in analytics
+        result["_markdown_text"] = markdown
         
         # Log critical fields
         loss_history = result.get("loss_history", [])
@@ -206,6 +208,7 @@ class ExtractorAgent:
             "image_descriptions": [],
             "summary": {},  # loss run summary with stated premium
             "requested_effective_date": "",
+            "_all_markdown_texts": [],  # raw markdown for premium text scanning
         }
 
         # Log all extractions before merge
@@ -231,8 +234,9 @@ class ExtractorAgent:
                 full_json=ext,
             )
             
-            # LOG THE ACTUAL KEYS so we can debug
-            log.info("merging_extraction", source=ext.get("_source_doc", "unknown"), keys=list(ext.keys()))
+            # Collect raw markdown for premium text scanning
+            if ext.get("_markdown_text"):
+                merged["_all_markdown_texts"].append(ext["_markdown_text"])
 
             # Company
             if "company" in ext and isinstance(ext["company"], dict):
@@ -461,6 +465,28 @@ class ExtractorAgent:
             ti = summary.get("total_incurred") or 0
             if isinstance(ti, (int, float)) and ti > 0:
                 result.stated_total_incurred = float(ti)
+        
+        # FALLBACK: Scan markdown texts for premium if not found in structured data
+        if result.stated_total_premium == 0:
+            import re
+            all_texts = raw.get("_all_markdown_texts", [])
+            for text in all_texts:
+                patterns = [
+                    r'[Tt]otal\s+[Pp]remium\s+[Pp]aid[:\s]*\$?([\d,]+)',
+                    r'[Tt]otal\s+[Pp]remium[:\s]*\$?([\d,]+)',
+                    r'[Ee]stimated\s+[Tt]otal\s+[Pp]remium[:\s]*\$?([\d,]+)',
+                ]
+                for pattern in patterns:
+                    matches = re.findall(pattern, text)
+                    for m in matches:
+                        try:
+                            val = float(m.replace(",", ""))
+                            # Sanity check: premium should be reasonable
+                            if 1000 <= val <= 10000000 and val > result.stated_total_premium:
+                                result.stated_total_premium = val
+                                log.info("premium_found_via_markdown_scan", value=val, doc_id=doc_id)
+                        except ValueError:
+                            pass
         
         # FALLBACK: Calculate incurred from records if summary not provided
         if result.stated_total_incurred == 0.0 and result.loss_history:
