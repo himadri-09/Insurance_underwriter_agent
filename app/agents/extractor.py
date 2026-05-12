@@ -118,22 +118,71 @@ class ExtractorAgent:
         self.processor = DocumentProcessor()
 
     async def _extract_single_pdf(self, filename: str, markdown: str) -> dict:
-        log.info("llm_extraction_starting", filename=filename, model=self.llm.settings.reasoning_model, markdown_chars=len(markdown))
-        result = await self.llm.reason(
-            system_prompt="You are an expert US commercial insurance data extractor. Classify and extract. Return JSON only.",
-            user_prompt=f"{CLASSIFY_AND_EXTRACT_PROMPT}\n\n---\n\nDOCUMENT ({filename}):\n\n{markdown}",
+        log.info("llm_extraction_starting", filename=filename, markdown_chars=len(markdown))
+
+        # Step 1: Quick classify from first 1500 chars
+        preview = markdown[:1500]
+        classify_result = await self.llm.reason(
+            system_prompt="Classify this document. Return JSON only: {\"doc_type\": \"acord|broker_submission|loss_run|legal_docs|fire_noc|prior_insurance|financial|unknown\", \"confidence\": 0.0-1.0}",
+            user_prompt=preview,
             response_format="json",
         )
-        if isinstance(result, str):
-            result = {"extracted_data": {"raw_text": result}, "classification": {"doc_type": "unknown", "confidence": 0.0}}
+        doc_type = classify_result.get("doc_type", "unknown") if isinstance(classify_result, dict) else "unknown"
+        confidence = classify_result.get("confidence", 0.0) if isinstance(classify_result, dict) else 0.0
+        log.info("quick_classify", filename=filename, doc_type=doc_type, confidence=confidence)
 
-        classification = result.get("classification", {})
-        extracted = result.get("extracted_data", result)
-        extracted["_source_doc"] = filename
-        extracted["_doc_type"] = classification.get("doc_type", "unknown")
-        extracted["_confidence"] = classification.get("confidence", 0.0)
-        log.info("llm_extraction_done", filename=filename, doc_type=extracted.get("_doc_type"), fields_found=len(extracted.keys()))
-        return extracted
+        # Step 2: Use focused prompt based on doc type
+        if doc_type == "loss_run":
+            extraction_prompt = EXTRACT_LOSS_RUN
+        elif doc_type in ("legal_docs", "fire_noc"):
+            extraction_prompt = EXTRACT_LEGAL
+        elif doc_type == "prior_insurance":
+            extraction_prompt = EXTRACT_PRIOR_INSURANCE
+        else:
+            extraction_prompt = EXTRACT_SUBMISSION
+
+        result = await self.llm.reason(
+            system_prompt="You are an expert US commercial insurance data extractor. Return JSON only.",
+            user_prompt=f"{extraction_prompt}\n\n---\n\nDOCUMENT ({filename}):\n\n{markdown}",
+            response_format="json",
+        )
+
+        if isinstance(result, str):
+            result = {"raw_text": result}
+
+        # Log the raw extraction for debugging
+        log.info(
+            "llm_extraction_raw",
+            filename=filename,
+            doc_type=doc_type,
+            result_type=type(result).__name__,
+            result_keys=list(result.keys()) if isinstance(result, dict) else [],
+            result_json=result if isinstance(result, dict) else None,
+        )
+
+        result["_source_doc"] = filename
+        result["_doc_type"] = doc_type
+        result["_confidence"] = confidence
+        
+        # Log critical fields
+        loss_history = result.get("loss_history", [])
+        prior_insurance = result.get("prior_insurance", [])
+        summary = result.get("summary", {})
+        
+        log.info(
+            "llm_extraction_done",
+            filename=filename,
+            doc_type=doc_type,
+            keys=list(result.keys()),
+            loss_history_count=len(loss_history) if isinstance(loss_history, list) else 0,
+            loss_history_type=type(loss_history).__name__,
+            prior_insurance_count=len(prior_insurance) if isinstance(prior_insurance, list) else 0,
+            prior_insurance_type=type(prior_insurance).__name__,
+            has_summary=bool(summary),
+            summary_total_premium=summary.get("total_premium") if isinstance(summary, dict) else None,
+        )
+        
+        return result
 
     async def _extract_single_image(self, filename: str, file_bytes: bytes, file_type: str) -> dict:
         log.info("image_extraction_starting", filename=filename, model=self.llm.settings.extraction_model)
@@ -159,9 +208,31 @@ class ExtractorAgent:
             "requested_effective_date": "",
         }
 
-        for ext in extractions:
+        # Log all extractions before merge
+        log.info(
+            "merge_starting",
+            total_extractions=len(extractions),
+            extraction_sources=[ext.get("_source_doc", "unknown") for ext in extractions if isinstance(ext, dict)],
+        )
+        
+        for idx, ext in enumerate(extractions):
             if not isinstance(ext, dict):
                 continue
+            
+            # LOG THE ACTUAL KEYS and full JSON so we can debug
+            log.info(
+                "merging_extraction",
+                index=idx,
+                source=ext.get("_source_doc", "unknown"),
+                doc_type=ext.get("_doc_type", "unknown"),
+                keys=list(ext.keys()),
+                loss_history_in_ext=len(ext.get("loss_history", [])) if isinstance(ext.get("loss_history"), list) else 0,
+                prior_insurance_in_ext=len(ext.get("prior_insurance", [])) if isinstance(ext.get("prior_insurance"), list) else 0,
+                full_json=ext,
+            )
+            
+            # LOG THE ACTUAL KEYS so we can debug
+            log.info("merging_extraction", source=ext.get("_source_doc", "unknown"), keys=list(ext.keys()))
 
             # Company
             if "company" in ext and isinstance(ext["company"], dict):
@@ -184,19 +255,20 @@ class ExtractorAgent:
             if "policies" in ext and isinstance(ext["policies"], list):
                 merged["prior_insurance"].extend(ext["policies"])
 
-            # Deep scan for prior insurance / policies
+            # DEEP SCAN for prior insurance / policies under any key
             for key, val in ext.items():
-                if key.startswith("_"):
+                if key.startswith("_") or key in ("company", "locations", "coverages",
+                    "loss_history", "records", "legal", "summary", "broker_notes",
+                    "other_fields", "prior_insurance", "policies"):
                     continue
                 if isinstance(val, list) and val and isinstance(val[0], dict):
-                    if any(k in val[0] for k in ("policy_number", "carrier", "expiration_date", "premium")):
-                        if key not in ("loss_history", "records", "coverages", "locations", "prior_insurance", "policies"):
-                            merged["prior_insurance"].extend(val)
-                            log.info("prior_insurance_found_deep", key=key, count=len(val))
-                elif isinstance(val, dict) and any(k in val for k in ("policy_number", "carrier", "premium")):
-                    if key not in ("company", "legal", "summary", "extracted_data"):
+                    if any(k in val[0] for k in ("policy_number", "expiration_date", "cancelled_by_carrier")):
+                        merged["prior_insurance"].extend(val)
+                        log.info("prior_insurance_found_via_deep_scan", key=key, count=len(val))
+                elif isinstance(val, dict) and any(k in val for k in ("policy_number", "carrier", "expiration_date")):
+                    if key not in ("company", "legal", "summary"):
                         merged["prior_insurance"].append(val)
-                        log.info("prior_insurance_found_deep_dict", key=key)
+                        log.info("prior_insurance_found_via_deep_scan_dict", key=key)
 
             # Loss history
             if "loss_history" in ext and isinstance(ext["loss_history"], list):
@@ -204,17 +276,17 @@ class ExtractorAgent:
             if "records" in ext and isinstance(ext["records"], list):
                 merged["loss_history"].extend(ext["records"])
 
-            # Deep scan — find any list of dicts with date_of_loss or claim_number
+            # DEEP SCAN — catch claims under any key name
             for key, val in ext.items():
-                if key.startswith("_") or key in ("company", "locations", "coverages", 
-                                                   "prior_insurance", "legal", "summary",
-                                                   "broker_notes", "other_fields", "image_descriptions",
-                                                   "loss_history", "records", "policies"):
+                if key.startswith("_") or key in ("company", "locations", "coverages",
+                    "prior_insurance", "legal", "summary", "broker_notes",
+                    "other_fields", "image_descriptions", "classification",
+                    "loss_history", "records", "requested_effective_date"):
                     continue
                 if isinstance(val, list) and val and isinstance(val[0], dict):
-                    if any(k in val[0] for k in ("date_of_loss", "claim_number", "amount_paid", "incurred")):
+                    if any(k in val[0] for k in ("date_of_loss", "claim_number", "amount_paid", "incurred", "total_incurred")):
                         merged["loss_history"].extend(val)
-                        log.info("loss_history_found_deep", key=key, count=len(val))
+                        log.info("loss_history_found_via_deep_scan", key=key, count=len(val))
 
             # Summary from loss runs — CAPTURE STATED PREMIUM
             if "summary" in ext and isinstance(ext["summary"], dict):
@@ -295,6 +367,20 @@ class ExtractorAgent:
                 )
                 if open_count > 0:
                     summary["open_claims"] = open_count
+
+        # Log final merged state with comprehensive details
+        log.info(
+            "merge_complete",
+            total_loss_history=len(merged["loss_history"]),
+            total_prior_insurance=len(merged["prior_insurance"]),
+            total_locations=len(merged["locations"]),
+            total_coverages=len(merged["coverages"]),
+            has_summary=bool(merged["summary"]),
+            summary_total_premium=merged["summary"].get("total_premium") if merged["summary"] else None,
+            summary_total_claims=merged["summary"].get("total_claims") if merged["summary"] else None,
+            summary_total_incurred=merged["summary"].get("total_incurred") if merged["summary"] else None,
+            merged_state=merged,
+        )
 
         return merged
 
