@@ -11,6 +11,28 @@ from app.models.schemas import ExtractionResult
 log = structlog.get_logger()
 
 
+def _deep_scan_info_completeness(extraction: ExtractionResult) -> dict:
+    """
+    Deep scan across all data sources to determine true information completeness.
+    Returns dict with flags for each critical information category.
+    """
+    return {
+        "has_loss_history": bool(extraction.loss_history) or bool(extraction.stated_total_incurred),
+        "has_prior_insurance": bool(extraction.prior_insurance) or bool(extraction.stated_total_premium),
+        "has_coverages": bool(extraction.coverages),
+        "has_company_basics": bool(extraction.company.name and extraction.company.address),
+        "has_industry_class": bool(extraction.company.naics_code or extraction.company.sic_code),
+        "has_revenue": bool(extraction.company.annual_revenue),
+        "has_property_details": bool(extraction.locations),
+        "has_business_description": bool(extraction.business_description or extraction.company.description),
+        "all_coverage_requested_data": bool(
+            extraction.coverages 
+            or extraction.stated_total_premium 
+            or extraction.business_description
+        ),
+    }
+
+
 def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     """
     Apply underwriting rules to pre-computed analytics.
@@ -212,18 +234,22 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         positives.append("Experience modification rate noted (check value)")
 
     # ══════════════════════════════════════════════════
-    # MISSING INFO
+    # MISSING INFO — DEEP SCAN
     # ══════════════════════════════════════════════════
+    # Check not only extraction arrays, but also alternative data sources
 
-    if not extraction.loss_history:
+    completeness = _deep_scan_info_completeness(extraction)
+    
+    # Only flag as truly missing if NO data found in any source
+    if not completeness["has_loss_history"]:
         missing.append("No loss runs provided — cannot verify claims history")
-    if not extraction.prior_insurance:
+    if not completeness["has_prior_insurance"]:
         missing.append("No prior insurance information — cannot verify continuity")
-    if not extraction.company.naics_code and not extraction.company.sic_code:
+    if not completeness["has_industry_class"]:
         missing.append("No NAICS/SIC code — cannot determine industry class")
-    if not extraction.company.annual_revenue:
+    if not completeness["has_revenue"]:
         missing.append("No revenue provided — cannot assess business size")
-    if not extraction.locations and any("property" in (c.coverage_type or "").lower() for c in extraction.coverages):
+    if not completeness["has_property_details"] and any("property" in (c.coverage_type or "").lower() for c in extraction.coverages):
         missing.append("No property details for property coverage request")
 
     # ══════════════════════════════════════════════════

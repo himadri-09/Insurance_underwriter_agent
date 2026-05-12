@@ -240,8 +240,16 @@ Extract every loss/claim record from this document. Return JSON:
   }
 }
 
-Extract every row. Use null for unreadable values, not guesses.
-Pay attention to which line of business each claim falls under (GL, property, WC, auto)."""
+CRITICAL INSTRUCTIONS:
+1. Extract EVERY row as a separate record.
+2. For summary section: CALCULATE totals by summing all records:
+   - total_incurred = SUM(all total_incurred from records)
+   - total_paid = SUM(all amount_paid from records)  
+   - total_claims = COUNT(all records)
+   - open_claims = COUNT(records with status="open" or "reserved")
+3. Use null for unreadable values, NOT guesses.
+4. Pay attention to which line of business each claim falls under (GL, property, WC, auto).
+5. DO NOT SKIP any claims - extract all of them."""
 
 
 EXTRACT_LEGAL = """You are an expert at reading legal documents related to insurance.

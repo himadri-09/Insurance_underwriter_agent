@@ -256,6 +256,46 @@ class ExtractorAgent:
                     if isinstance(pi, dict) and not pi.get("cancelled_by_carrier"):
                         pi["cancelled_by_carrier"] = True
 
+        # ══════════════════════════════════════════════════
+        # POST-PROCESSING: Auto-calculate missing summary totals
+        # ══════════════════════════════════════════════════
+        # If summary exists but key totals are missing/zero, calculate from loss_history records
+        if merged["loss_history"] and merged["summary"]:
+            summary = merged["summary"]
+            
+            # Calculate total_incurred if missing or zero
+            if not summary.get("total_incurred") or summary.get("total_incurred") == 0:
+                total_inc = sum(
+                    (r.get("total_incurred") or (r.get("amount_paid", 0) + r.get("amount_reserved", 0)))
+                    for r in merged["loss_history"]
+                    if isinstance(r, dict)
+                )
+                if total_inc > 0:
+                    summary["total_incurred"] = total_inc
+            
+            # Calculate total_paid if missing or zero
+            if not summary.get("total_paid") or summary.get("total_paid") == 0:
+                total_paid = sum(
+                    r.get("amount_paid", 0)
+                    for r in merged["loss_history"]
+                    if isinstance(r, dict)
+                )
+                if total_paid > 0:
+                    summary["total_paid"] = total_paid
+            
+            # Calculate total_claims if missing or zero
+            if not summary.get("total_claims") or summary.get("total_claims") == 0:
+                summary["total_claims"] = len(merged["loss_history"])
+            
+            # Calculate open_claims if missing
+            if not summary.get("open_claims"):
+                open_count = sum(
+                    1 for r in merged["loss_history"]
+                    if isinstance(r, dict) and r.get("status", "").lower() in ("open", "reserved")
+                )
+                if open_count > 0:
+                    summary["open_claims"] = open_count
+
         return merged
 
     def _build_extraction_result(self, raw: dict, doc_id: str) -> ExtractionResult:
@@ -326,7 +366,7 @@ class ExtractorAgent:
         # Requested effective date
         result.requested_effective_date = raw.get("requested_effective_date", "")
 
-        # STATED PREMIUM from loss run summary — AUTHORITATIVE
+        # STATED PREMIUM & INCURRED from loss run summary — AUTHORITATIVE
         summary = raw.get("summary", {})
         if isinstance(summary, dict):
             tp = summary.get("total_premium") or summary.get("total_premium_paid") or 0
@@ -335,6 +375,16 @@ class ExtractorAgent:
             ti = summary.get("total_incurred") or 0
             if isinstance(ti, (int, float)) and ti > 0:
                 result.stated_total_incurred = float(ti)
+        
+        # FALLBACK: Calculate incurred from records if summary not provided
+        if result.stated_total_incurred == 0.0 and result.loss_history:
+            total_inc = sum(
+                (r.incurred or (r.amount_paid + r.amount_reserved))
+                for r in result.loss_history
+                if r.incurred or (r.amount_paid + r.amount_reserved)
+            )
+            if total_inc > 0:
+                result.stated_total_incurred = total_inc
 
         # Raw fields for audit
         result.raw_fields = [
