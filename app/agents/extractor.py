@@ -184,11 +184,37 @@ class ExtractorAgent:
             if "policies" in ext and isinstance(ext["policies"], list):
                 merged["prior_insurance"].extend(ext["policies"])
 
+            # Deep scan for prior insurance / policies
+            for key, val in ext.items():
+                if key.startswith("_"):
+                    continue
+                if isinstance(val, list) and val and isinstance(val[0], dict):
+                    if any(k in val[0] for k in ("policy_number", "carrier", "expiration_date", "premium")):
+                        if key not in ("loss_history", "records", "coverages", "locations", "prior_insurance", "policies"):
+                            merged["prior_insurance"].extend(val)
+                            log.info("prior_insurance_found_deep", key=key, count=len(val))
+                elif isinstance(val, dict) and any(k in val for k in ("policy_number", "carrier", "premium")):
+                    if key not in ("company", "legal", "summary", "extracted_data"):
+                        merged["prior_insurance"].append(val)
+                        log.info("prior_insurance_found_deep_dict", key=key)
+
             # Loss history
             if "loss_history" in ext and isinstance(ext["loss_history"], list):
                 merged["loss_history"].extend(ext["loss_history"])
             if "records" in ext and isinstance(ext["records"], list):
                 merged["loss_history"].extend(ext["records"])
+
+            # Deep scan — find any list of dicts with date_of_loss or claim_number
+            for key, val in ext.items():
+                if key.startswith("_") or key in ("company", "locations", "coverages", 
+                                                   "prior_insurance", "legal", "summary",
+                                                   "broker_notes", "other_fields", "image_descriptions",
+                                                   "loss_history", "records", "policies"):
+                    continue
+                if isinstance(val, list) and val and isinstance(val[0], dict):
+                    if any(k in val[0] for k in ("date_of_loss", "claim_number", "amount_paid", "incurred")):
+                        merged["loss_history"].extend(val)
+                        log.info("loss_history_found_deep", key=key, count=len(val))
 
             # Summary from loss runs — CAPTURE STATED PREMIUM
             if "summary" in ext and isinstance(ext["summary"], dict):
