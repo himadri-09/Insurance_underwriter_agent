@@ -109,19 +109,19 @@ class LocationInfo(BaseModel):
 # ── Loss ─────────────────────────────────────────────
 
 class LossRecord(BaseModel):
-    policy_year: str = ""
-    carrier: str = ""
-    lob: str = ""
-    claim_number: str = ""
-    date_of_loss: str = ""
-    type: str = ""
-    description: str = ""
-    status: str = ""
+    policy_year: Optional[str] = None
+    carrier: Optional[str] = None
+    lob: Optional[str] = None
+    claim_number: Optional[str] = None
+    date_of_loss: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
     claims_count: int = 0
     amount_paid: float = 0.0
     amount_reserved: float = 0.0
     incurred: float = 0.0
-    subrogation: str = ""
+    subrogation: Optional[str] = None
 
 
 # ── Coverage ─────────────────────────────────────────

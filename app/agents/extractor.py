@@ -1,13 +1,16 @@
 """
 Agent: Document Extractor — Commercial Insurance
 
+
 All PDFs parsed in parallel via LlamaParse (batch).
 Classification + extraction done in ONE LLM call per document.
 All images processed in parallel via asyncio.gather.
 
+
 Key: captures stated_total_premium from loss run summaries
      and cancelled_by_carrier from prior insurance / broker notes.
 """
+
 
 import asyncio
 import structlog
@@ -24,15 +27,20 @@ from app.agents.prompts import (
     EXTRACT_LEGAL, EXTRACT_PRIOR_INSURANCE
 )
 
+
 log = structlog.get_logger()
+
 
 
 CLASSIFY_AND_EXTRACT_PROMPT = """You are an expert US commercial insurance document processor.
 
+
 STEP 1: Classify this document into one of these types:
 - acord, broker_submission, loss_run, property_schedule, legal_docs, fire_noc, prior_insurance, financial, unknown
 
+
 STEP 2: Extract ALL structured data based on the document type.
+
 
 Return JSON with this structure:
 {
@@ -43,7 +51,9 @@ Return JSON with this structure:
   "extracted_data": { ... all fields ... }
 }
 
+
 For ALL document types, extract into this schema where applicable:
+
 
 "company": { "name", "dba", "registration_number", "entity_type", "description", "naics_code", "sic_code", "industry", "website", "address", "city", "state", "zip_code", "phone", "email", "year_established", "years_in_business", "funding_stage", "annual_revenue", "headcount", "annual_payroll" },
 "locations": [{ "address", "city", "state", "zip_code", "building_value", "contents_value", "bi_value", "construction_type", "year_built", "stories", "square_footage", "sprinklered", "alarm_system", "occupancy", "protection_class", "roof_type", "roof_age", "flood_zone" }],
@@ -53,6 +63,7 @@ For ALL document types, extract into this schema where applicable:
 "legal": { "pending_lawsuits", "lawsuit_details", "regulatory_actions", "regulatory_details", "fire_noc_status", "fire_noc_expiry", "compliance_notes" },
 "broker_notes": "",
 "requested_effective_date": "",
+
 
 CRITICAL FOR LOSS RUNS: Also extract the SUMMARY section at the bottom:
 "summary": {
@@ -64,15 +75,18 @@ CRITICAL FOR LOSS RUNS: Also extract the SUMMARY section at the bottom:
   "loss_ratio": ""
 }
 
+
 CRITICAL FOR PRIOR INSURANCE / DEC PAGES:
 - If ANY mention of "non-renewal", "non-renewed", "will not renew", "cancelled by carrier":
   set cancelled_by_carrier: true and include carrier name.
 - Extract the TOTAL ANNUAL PREMIUM if shown.
 - Extract ALL endorsements listed.
 
+
 CRITICAL FOR BROKER SUBMISSIONS:
 - Extract the REQUESTED effective date (not current policy date).
 - If broker mentions any carrier non-renewal, capture it.
+
 
 Rules:
 - Extract exact values. Do not infer or calculate.
@@ -81,19 +95,23 @@ Rules:
 """ + """
 When extracting from ACORD forms, know that:
 
+
 ACORD 125 (Commercial Applicant):
 - Applicant name, DBA, address, FEIN (→ registration_number), entity type
 - SIC/NAICS codes, nature of business, years in business
 - Prior insurance: carrier, policy number, premium, dates
 - "Any policy cancelled/declined/non-renewed?" — if YES, set cancelled_by_carrier: true
 
+
 ACORD 126 (GL Section):
 - Classification codes, exposure basis, limits, deductible
 - Occurrence vs claims-made, hazard questions
 
+
 ACORD 130 (Workers Compensation):
 - State(s), classification codes, payroll per class, experience mod rate
 - Prior WC carrier and premium
+
 
 ACORD 140 (Property Section):
 - Construction type, year built, stories, sq ft, sprinklered, alarm
@@ -101,6 +119,7 @@ ACORD 140 (Property Section):
 - Values: building, contents, business income
 - Cause of loss form, coinsurance, valuation method
 """
+
 
 
 IMAGE_PROMPT = """Describe this image for an insurance underwriter. Note:
@@ -111,14 +130,31 @@ IMAGE_PROMPT = """Describe this image for an insurance underwriter. Note:
 Return JSON: {"description": "", "damage_visible": false, "damage_severity": "", "property_type": "", "safety_concerns": [], "condition_assessment": "", "relevant_details": []}"""
 
 
+
 class ExtractorAgent:
     def __init__(self):
         self.llm = LLMService()
         self.parser = ParseService()
         self.processor = DocumentProcessor()
 
+    def _to_float(self, value, default=0.0) -> float:
+        if value is None or value == "":
+            return default
+        if isinstance(value, (int, float)):
+            return float(value)
+        try:
+            cleaned = str(value).replace(",", "").replace("$", "").strip()
+            return float(cleaned) if cleaned else default
+        except (TypeError, ValueError):
+            return default
+
+    def _to_str_lower(self, value) -> str:
+        return str(value or "").strip().lower()
+
+
     async def _extract_single_pdf(self, filename: str, markdown: str) -> dict:
         log.info("llm_extraction_starting", filename=filename, markdown_chars=len(markdown))
+
 
         # Step 1: Quick classify from first 1500 chars
         preview = markdown[:1500]
@@ -131,6 +167,7 @@ class ExtractorAgent:
         confidence = classify_result.get("confidence", 0.0) if isinstance(classify_result, dict) else 0.0
         log.info("quick_classify", filename=filename, doc_type=doc_type, confidence=confidence)
 
+
         # Step 2: Use focused prompt based on doc type
         if doc_type == "loss_run":
             extraction_prompt = EXTRACT_LOSS_RUN
@@ -141,14 +178,17 @@ class ExtractorAgent:
         else:
             extraction_prompt = EXTRACT_SUBMISSION
 
+
         result = await self.llm.reason(
             system_prompt="You are an expert US commercial insurance data extractor. Return JSON only.",
             user_prompt=f"{extraction_prompt}\n\n---\n\nDOCUMENT ({filename}):\n\n{markdown}",
             response_format="json",
         )
 
+
         if isinstance(result, str):
             result = {"raw_text": result}
+
 
         # Log the raw extraction for debugging
         log.info(
@@ -159,6 +199,7 @@ class ExtractorAgent:
             result_keys=list(result.keys()) if isinstance(result, dict) else [],
             result_json=result if isinstance(result, dict) else None,
         )
+
 
         result["_source_doc"] = filename
         result["_doc_type"] = doc_type
@@ -186,6 +227,7 @@ class ExtractorAgent:
         
         return result
 
+
     async def _extract_single_image(self, filename: str, file_bytes: bytes, file_type: str) -> dict:
         log.info("image_extraction_starting", filename=filename, model=self.llm.settings.extraction_model)
         img_b64 = self.processor.image_to_base64(file_bytes)
@@ -194,6 +236,7 @@ class ExtractorAgent:
         result["_doc_type"] = "incident_photo"
         log.info("image_extraction_done", filename=filename)
         return result
+
 
     def _merge_extractions(self, extractions: list) -> dict:
         merged = {
@@ -210,6 +253,7 @@ class ExtractorAgent:
             "requested_effective_date": "",
             "_all_markdown_texts": [],  # raw markdown for premium text scanning
         }
+
 
         # Log all extractions before merge
         log.info(
@@ -238,16 +282,19 @@ class ExtractorAgent:
             if ext.get("_markdown_text"):
                 merged["_all_markdown_texts"].append(ext["_markdown_text"])
 
+
             # Company
             if "company" in ext and isinstance(ext["company"], dict):
                 for k, v in ext["company"].items():
                     if v and not merged["company"].get(k):
                         merged["company"][k] = v
 
+
             # Lists
             for key in ("locations", "coverages", "other_fields"):
                 if key in ext and isinstance(ext[key], list):
                     merged[key].extend(ext[key])
+
 
             # Prior insurance — handle list or dict
             if "prior_insurance" in ext:
@@ -258,6 +305,7 @@ class ExtractorAgent:
                     merged["prior_insurance"].append(pi)
             if "policies" in ext and isinstance(ext["policies"], list):
                 merged["prior_insurance"].extend(ext["policies"])
+
 
             # DEEP SCAN for prior insurance / policies under any key
             for key, val in ext.items():
@@ -274,11 +322,13 @@ class ExtractorAgent:
                         merged["prior_insurance"].append(val)
                         log.info("prior_insurance_found_via_deep_scan_dict", key=key)
 
+
             # Loss history
             if "loss_history" in ext and isinstance(ext["loss_history"], list):
                 merged["loss_history"].extend(ext["loss_history"])
             if "records" in ext and isinstance(ext["records"], list):
                 merged["loss_history"].extend(ext["records"])
+
 
             # DEEP SCAN — catch claims under any key name
             for key, val in ext.items():
@@ -292,11 +342,13 @@ class ExtractorAgent:
                         merged["loss_history"].extend(val)
                         log.info("loss_history_found_via_deep_scan", key=key, count=len(val))
 
+
             # Summary from loss runs — CAPTURE STATED PREMIUM
             if "summary" in ext and isinstance(ext["summary"], dict):
                 for k, v in ext["summary"].items():
                     if v and not merged["summary"].get(k):
                         merged["summary"][k] = v
+
 
             # Legal
             if "legal" in ext and isinstance(ext["legal"], dict):
@@ -308,13 +360,16 @@ class ExtractorAgent:
                 if field in ext and ext[field]:
                     merged["legal"][field] = ext[field]
 
+
             # Broker notes
             if ext.get("broker_notes"):
                 merged["broker_notes"] += "\n" + str(ext["broker_notes"])
 
+
             # Requested effective date
             if ext.get("requested_effective_date") and not merged["requested_effective_date"]:
                 merged["requested_effective_date"] = str(ext["requested_effective_date"])
+
 
             # Image descriptions
             if ext.get("_doc_type") == "incident_photo":
@@ -324,13 +379,15 @@ class ExtractorAgent:
                     "damage_visible": ext.get("damage_visible", False),
                 })
 
+
             # Detect non-renewal from any document
-            notes = str(ext.get("broker_notes", "")).lower()
+            notes = self._to_str_lower(ext.get("broker_notes", ""))
             if any(kw in notes for kw in ["non-renew", "nonrenew", "will not renew", "non-renewal"]):
                 # Mark in prior_insurance if we can find the carrier
                 for pi in merged["prior_insurance"]:
                     if isinstance(pi, dict) and not pi.get("cancelled_by_carrier"):
                         pi["cancelled_by_carrier"] = True
+
 
         # ══════════════════════════════════════════════════
         # POST-PROCESSING: Auto-calculate missing summary totals
@@ -340,9 +397,11 @@ class ExtractorAgent:
             summary = merged["summary"]
             
             # Calculate total_incurred if missing or zero
-            if not summary.get("total_incurred") or summary.get("total_incurred") == 0:
+            if not self._to_float(summary.get("total_incurred")):
                 total_inc = sum(
-                    (r.get("total_incurred") or (r.get("amount_paid", 0) + r.get("amount_reserved", 0)))
+                    self._to_float(r.get("total_incurred")) or (
+                        self._to_float(r.get("amount_paid")) + self._to_float(r.get("amount_reserved"))
+                    )
                     for r in merged["loss_history"]
                     if isinstance(r, dict)
                 )
@@ -350,9 +409,9 @@ class ExtractorAgent:
                     summary["total_incurred"] = total_inc
             
             # Calculate total_paid if missing or zero
-            if not summary.get("total_paid") or summary.get("total_paid") == 0:
+            if not self._to_float(summary.get("total_paid")):
                 total_paid = sum(
-                    r.get("amount_paid", 0)
+                    self._to_float(r.get("amount_paid"))
                     for r in merged["loss_history"]
                     if isinstance(r, dict)
                 )
@@ -366,11 +425,15 @@ class ExtractorAgent:
             # Calculate open_claims if missing
             if not summary.get("open_claims"):
                 open_count = sum(
-                    1 for r in merged["loss_history"]
-                    if isinstance(r, dict) and r.get("status", "").lower() in ("open", "reserved")
+                    1
+                    for r in merged["loss_history"]
+                    if isinstance(r, dict)
+                    and self._to_str_lower(r.get("status")) in ("open", "reserved")
                 )
+
                 if open_count > 0:
                     summary["open_claims"] = open_count
+
 
         # Log final merged state with comprehensive details
         log.info(
@@ -386,10 +449,13 @@ class ExtractorAgent:
             merged_state=merged,
         )
 
+
         return merged
+
 
     def _build_extraction_result(self, raw: dict, doc_id: str) -> ExtractionResult:
         result = ExtractionResult()
+
 
         # Company
         if "company" in raw and isinstance(raw["company"], dict):
@@ -401,6 +467,7 @@ class ExtractorAgent:
             except Exception:
                 pass
 
+
         # Locations
         for loc in raw.get("locations", []):
             if isinstance(loc, dict):
@@ -411,15 +478,28 @@ class ExtractorAgent:
                 except Exception:
                     pass
 
+
         # Loss history
         for loss in raw.get("loss_history", []):
             if isinstance(loss, dict):
                 try:
-                    result.loss_history.append(LossRecord(**{
-                        k: v for k, v in loss.items() if k in LossRecord.model_fields
-                    }))
-                except Exception:
-                    pass
+                    normalized = {}
+                    for k, v in loss.items():
+                        if k == "total_incurred" and "incurred" not in loss:
+                            normalized["incurred"] = self._to_float(v)
+                        elif k in LossRecord.model_fields:
+                            field_info = LossRecord.model_fields[k]
+                            annotation_str = str(field_info.annotation)
+                            if v is None and annotation_str in ("float", "<class 'float'>"):
+                                normalized[k] = 0.0
+                            elif k in ("amount_paid", "amount_reserved", "incurred"):
+                                normalized[k] = self._to_float(v)
+                            else:
+                                normalized[k] = v
+                    result.loss_history.append(LossRecord(**normalized))
+                except Exception as e:
+                    log.warning("loss_record_skipped", error=str(e), record=loss)
+
 
         # Coverages
         for cov in raw.get("coverages", []):
@@ -431,6 +511,7 @@ class ExtractorAgent:
                 except Exception:
                     pass
 
+
         # Prior insurance
         for pi in raw.get("prior_insurance", []):
             if isinstance(pi, dict):
@@ -441,6 +522,7 @@ class ExtractorAgent:
                 except Exception:
                     pass
 
+
         # Legal
         if "legal" in raw and isinstance(raw["legal"], dict):
             try:
@@ -450,21 +532,25 @@ class ExtractorAgent:
             except Exception:
                 pass
 
+
         # Broker notes
         result.broker_notes = raw.get("broker_notes", "").strip()
+
 
         # Requested effective date
         result.requested_effective_date = raw.get("requested_effective_date", "")
 
+
         # STATED PREMIUM & INCURRED from loss run summary — AUTHORITATIVE
         summary = raw.get("summary", {})
         if isinstance(summary, dict):
-            tp = summary.get("total_premium") or summary.get("total_premium_paid") or 0
-            if isinstance(tp, (int, float)) and tp > 0:
-                result.stated_total_premium = float(tp)
-            ti = summary.get("total_incurred") or 0
-            if isinstance(ti, (int, float)) and ti > 0:
-                result.stated_total_incurred = float(ti)
+            tp = self._to_float(summary.get("total_premium") or summary.get("total_premium_paid"))
+            if tp > 0:
+                result.stated_total_premium = tp
+
+            ti = self._to_float(summary.get("total_incurred"))
+            if ti > 0:
+                result.stated_total_incurred = ti
         
         # FALLBACK: Scan markdown texts for premium if not found in structured data
         if result.stated_total_premium == 0:
@@ -475,13 +561,13 @@ class ExtractorAgent:
                     r'[Tt]otal\s+[Pp]remium\s+[Pp]aid[:\s]*\$?([\d,]+)',
                     r'[Tt]otal\s+[Pp]remium[:\s]*\$?([\d,]+)',
                     r'[Ee]stimated\s+[Tt]otal\s+[Pp]remium[:\s]*\$?([\d,]+)',
+                    r'[Tt]otal\s+[Pp]remium\s+\(.*?\)[:\s]*\$?([\d,]+)',
                 ]
                 for pattern in patterns:
                     matches = re.findall(pattern, text)
                     for m in matches:
                         try:
                             val = float(m.replace(",", ""))
-                            # Sanity check: premium should be reasonable
                             if 1000 <= val <= 10000000 and val > result.stated_total_premium:
                                 result.stated_total_premium = val
                                 log.info("premium_found_via_markdown_scan", value=val, doc_id=doc_id)
@@ -491,17 +577,19 @@ class ExtractorAgent:
         # FALLBACK: Calculate incurred from records if summary not provided
         if result.stated_total_incurred == 0.0 and result.loss_history:
             total_inc = sum(
-                (r.incurred or (r.amount_paid + r.amount_reserved))
+                (self._to_float(r.incurred) or (self._to_float(r.amount_paid) + self._to_float(r.amount_reserved)))
                 for r in result.loss_history
-                if r.incurred or (r.amount_paid + r.amount_reserved)
+                if (r.incurred is not None) or (r.amount_paid is not None) or (r.amount_reserved is not None)
             )
             if total_inc > 0:
                 result.stated_total_incurred = total_inc
+
 
         # Raw fields for audit
         result.raw_fields = [
             ExtractedField(field_name="full_extraction", value=raw, confidence=1.0, source_doc_id=doc_id)
         ]
+
 
         # Missing fields
         missing = []
@@ -523,7 +611,9 @@ class ExtractorAgent:
             missing.append("business_description")
         result.missing_fields = missing
 
+
         return result
+
 
     def _merge_form_data(self, extraction: ExtractionResult, form_data: dict):
         company_fields = form_data.get("company", {})
@@ -532,13 +622,16 @@ class ExtractorAgent:
                 if v and hasattr(extraction.company, k) and not getattr(extraction.company, k, None):
                     setattr(extraction.company, k, v)
 
+
         if form_data.get("business_description"):
             extraction.business_description = str(form_data["business_description"])
             if not extraction.company.description:
                 extraction.company.description = extraction.business_description
 
+
         if form_data.get("property_description"):
             extraction.property_description = str(form_data["property_description"])
+
 
         incidents = form_data.get("incidents", [])
         if isinstance(incidents, list):
@@ -551,18 +644,22 @@ class ExtractorAgent:
                     except Exception:
                         pass
 
+
     async def run(self, state: PipelineState, files: dict) -> PipelineState:
         state.status = "extracting"
         state.current_step = "extraction"
+
 
         # Step 1: Parse all PDFs in parallel
         log.info("batch_extraction_starting", total_files=len(files))
         parsed = await self.parser.parse_batch(files)
         log.info("batch_parse_complete", pdfs_parsed=len(parsed))
 
+
         # Step 2: Build extraction tasks
         pdf_tasks = []
         image_tasks = []
+
 
         for doc in state.documents:
             if doc.filename not in files:
@@ -572,9 +669,11 @@ class ExtractorAgent:
             elif doc.file_type in ("png", "jpg", "jpeg", "tiff"):
                 image_tasks.append(self._extract_single_image(doc.filename, files[doc.filename], doc.file_type))
 
+
         # Step 3: Run ALL extractions in parallel
         log.info("parallel_extraction_starting", pdf_count=len(pdf_tasks), image_count=len(image_tasks))
         all_results = await asyncio.gather(*pdf_tasks, *image_tasks, return_exceptions=True)
+
 
         all_raw = []
         for result in all_results:
@@ -592,15 +691,19 @@ class ExtractorAgent:
                         doc.classification_confidence = result.get("_confidence", 0.0)
                 all_raw.append(result)
 
+
         log.info("parallel_extraction_done", successful=len(all_raw), errors=len(state.errors))
+
 
         # Step 4: Merge
         combined = self._merge_extractions(all_raw)
         state.extraction = self._build_extraction_result(combined, state.submission_id)
 
+
         # Step 5: Merge form data
         if state.form_data:
             self._merge_form_data(state.extraction, state.form_data)
+
 
         # Step 6: Detect LOB
         if state.extraction.coverages:
@@ -617,6 +720,7 @@ class ExtractorAgent:
                     break
             if len(state.extraction.coverages) > 1:
                 state.lob = "multi_line"
+
 
         log.info("extraction_complete",
             company=state.extraction.company.name,
