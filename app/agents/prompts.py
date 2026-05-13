@@ -115,96 +115,51 @@ Return JSON with these fields (use null for missing values, do not guess):
   ],
   "loss_history": [
     {
+      "claim_number": "",
       "date_of_loss": "",
       "type": "",
       "lob": "",
       "description": "",
       "status": "",
-      "amount_paid": null,
-      "amount_reserved": null,
-      "incurred": null
+      "amount_paid": 0.0,
+      "amount_reserved": 0.0,
+      "incurred": 0.0,
+      "subrogation": null,
+      "carrier": ""
     }
   ],
   "legal": {
     "pending_lawsuits": false,
     "lawsuit_details": "",
     "regulatory_actions": false,
-    "regulatory_details": ""
+    "regulatory_details": "",
+    "fire_noc_status": "",
+    "fire_noc_expiry": "",
+    "compliance_notes": ""
   },
   "broker_notes": "",
-  "other_fields": []
+  "requested_effective_date": "",
+  "summary": {
+    "total_claims": 0,
+    "total_incurred": 0.0,
+    "total_paid": 0.0,
+    "total_premium": 0.0,
+    "premium_is_annual": null,
+    "open_claims": 0,
+    "years_covered": "",
+    "loss_ratio": ""
+  }
 }
 
-## ACORD Form Field Guide
-
-When extracting from ACORD forms, use this mapping:
-
-ACORD 125 (Commercial Applicant — base form, always present):
-- Applicant name, DBA, mailing address, FEIN (map to registration_number)
-- Entity type: individual, partnership, corporation, LLC, joint venture, other
-- SIC code and NAICS code (both may be present — extract both)
-- Nature of business / description of operations
-- Years in business, date business started (calculate years_in_business from start date if needed)
-- Prior insurance: carrier name, policy number, effective/expiration dates, premium
-- Any policy cancelled, declined, or non-renewed in last 3 years (critical UW flag)
-- Broker/agency name and contact in remarks section → broker_notes
-
-ACORD 126 (GL Section — attached to 125):
-- GL classification code and description per location
-- Exposure basis: receipts/sales, payroll, area (sq ft), units, other
-- Limits requested: each occurrence, general aggregate, products-completed ops aggregate, personal/advertising injury, fire damage, medical expense
-- Occurrence vs claims-made trigger
-- Deductible per claim or per occurrence
-- Retroactive date if claims-made
-- Hazard questions (yes/no): medical facilities, radioactive materials, hazmat storage/transport, sold/acquired/discontinued operations, machinery loaned, watercraft/docks, aircraft exposure
-- Products questions: install/service products, foreign products, R&D, warranties
-- Employee benefits liability: number of employees, deductible
-
-ACORD 130 (Workers Compensation Section):
-- State(s) where WC coverage is needed
-- Classification codes and descriptions per state
-- Number of employees per classification
-- Estimated annual remuneration (payroll) per classification
-- Experience modification factor (mod rate) — critical for WC pricing
-- Prior WC carrier, premium, policy period
-- FEIN
-- Nature and methods of employer's work
-
-ACORD 140 (Property Section — attached to 125):
-- Per-location details: address, building number
-- Construction type: frame, joisted masonry, non-combustible, masonry non-combustible, modified fire resistive, fire resistive
-- Year built, number of stories, total area (sq ft)
-- Sprinklered: yes/no/partial, percentage sprinklered
-- Alarm type: central station, local, proprietary, police/fire connected
-- Protection class (1-10, from ISO/PPC)
-- Occupancy description
-- Values: building, business personal property (contents), business income, extra expense
-- Cause of loss form: basic (CP 10 10), broad (CP 10 20), special (CP 10 30)
-- Coinsurance percentage: 80%, 90%, 100%
-- Valuation: actual cash value (ACV) vs replacement cost (RC)
-- Deductible amount
-- Optional coverages: agreed value, inflation guard, ordinance or law
-
-## Common Extraction Pitfalls — Handle These Correctly
-
-- FEIN/EIN is NOT the policy number. FEIN format: XX-XXXXXXX
-- "Effective date" on ACORD 125 is the REQUESTED effective date, not the current policy date
-- Prior insurance section may list multiple prior carriers — extract ALL of them
-- GL limits format: "1,000,000/2,000,000" means per-occurrence/aggregate — split into separate fields
-- Construction type abbreviations: FR=frame, JM=joisted masonry, NC=non-combustible, MNC=masonry non-combustible, MFR=modified fire resistive, FR=fire resistive (context matters)
-- Protection class "10" means unprotected/rural — this is a significant risk factor
-- If "ANY POLICY CANCELLED, DECLINED, OR NON-RENEWED" is checked YES, extract the explanation — this is the most important UW flag on the form
-- Remarks/processing instructions section often contains critical broker notes — always extract
-- Multiple locations may span multiple pages of ACORD 140 — capture ALL locations
-
 Rules:
-- Extract exact values as they appear. Do not infer or calculate.
+- Do not infer or calculate.
 - For dollar amounts, return as numbers without $ or commas.
 - For NAICS/SIC codes, extract the exact code if visible.
 - For locations, capture all properties/buildings listed.
 - For coverages, capture each line of business separately (GL, property, WC, auto, umbrella, cyber).
 - If a field is partially visible or unclear, still extract with a note in other_fields.
 - If the document is NOT an ACORD form, still extract all available information into the same JSON structure."""
+
 
 EXTRACT_LOSS_RUN = """You are an expert at reading US commercial insurance loss runs and experience reports.
 
@@ -235,21 +190,50 @@ Extract every loss/claim record from this document. Return JSON:
     "total_claims": 0,
     "total_incurred": 0.0,
     "total_paid": 0.0,
+    "total_premium": 0.0,
+    "premium_is_annual": null,
     "open_claims": 0,
-    "years_covered": ""
+    "years_covered": "",
+    "loss_ratio": ""
   }
 }
 
-CRITICAL INSTRUCTIONS:
-1. Extract EVERY row as a separate record.
-2. For summary section: CALCULATE totals by summing all records:
-   - total_incurred = SUM(all total_incurred from records)
-   - total_paid = SUM(all amount_paid from records)  
-   - total_claims = COUNT(all records)
-   - open_claims = COUNT(records with status="open" or "reserved")
-3. Use null for unreadable values, NOT guesses.
-4. Pay attention to which line of business each claim falls under (GL, property, WC, auto).
-5. DO NOT SKIP any claims - extract all of them."""
+CRITICAL EXTRACTION RULES — READ CAREFULLY:
+
+1. The "records" array must contain ONLY individual claim rows.
+   Each record needs a specific date_of_loss, claim number or description,
+   and an incurred/paid amount tied to that specific event.
+
+2. SUMMARY ROWS, SUBTOTALS, AND SECTION TOTALS ARE NOT CLAIMS.
+   Do NOT add these to "records". They go into "summary" instead:
+   - "GL/LL SUMMARY: 3 claims, $131,500 total incurred"
+   - "PROPERTY SUMMARY: 2 claims, $171,200 total incurred"
+   - "OVERALL SUMMARY: Total Claims: 5, Total Incurred: $302,700"
+   - "Total Premium (5 years, estimated): $128,000"
+   - Any row that is a running total, subtotal, or section header
+   If you add summary rows to records, every dollar gets counted twice. Do not do this.
+
+3. For the "summary" object:
+   - total_incurred: copy the STATED grand total from the loss run summary section exactly.
+     Do NOT recalculate by summing records. Copy the exact number written in the document.
+   - total_premium: copy the STATED total premium exactly as written.
+     Example: "Total Premium (5 years, estimated): $128,000" → total_premium: 128000
+     Example: "Annual Premium: $28,500" → total_premium: 28500
+   - premium_is_annual: set true if the premium is labeled "annual" or "per year".
+     Set false if labeled "total", "5-year total", "estimated total", etc.
+     Set null if the label is ambiguous.
+   - years_covered: the date range or number of years the loss run covers.
+     Example: "03/01/2022 - 10/28/2026" or "5 years" or "2021-2026"
+   - loss_ratio: copy the stated loss ratio if the document shows one.
+
+4. Extract ALL individual claims. Do not skip any.
+
+5. Use null for unreadable values, NOT guesses.
+
+6. Pay attention to which line of business each claim falls under (GL, property, WC, auto).
+
+7. If the loss run has multiple carrier sections (e.g. "2020-2022 Travelers", "2024+ EMC"),
+   note the carrier in each individual claim record's context."""
 
 
 EXTRACT_LEGAL = """You are an expert at reading legal documents related to insurance.
@@ -333,101 +317,30 @@ Apply these rules to every submission. These are your decision criteria.
 - Established business (3+ years) with clean loss history
 - Loss ratio below 40% over last 3 years
 - 0-2 claims in last 3 years, all closed
-- Continuous insurance with no lapses
-- Standard class of business (office, retail, professional services, light manufacturing)
-- Revenue $1M-$50M
-- Property in good condition, sprinklered, alarmed
-- Adequate prior limits for business size
-- Fire NOC valid (where required)
+- Continuous insurance with same or improving terms
+- Standard construction, protection class 1-6
+- Revenue under $10M
 
-### PREFERRED ACCEPT (score 5, status "accept")
-- 5+ years in business with zero claims in last 5 years
-- Revenue $5M-$50M with stable or growing trend
-- Multi-year insurance relationship with same carrier, no lapses
-- Property modernized, fully sprinklered, monitored alarm, fire resistive construction
-- Formal safety program, employee training documented
-- Professional risk management in place
-- Low-hazard class (office, technology, consulting)
-- Multi-line opportunity (GL + property + umbrella + WC bundled)
+### PREFERRED (score 5, status "accept")
+- All Standard Accept criteria plus:
+- Loss ratio below 20%
+- 10+ years in business
+- Multiple lines requested (cross-sell opportunity)
+- Revenue growth trend, financially stable
 
-### SCORING FACTORS
+---
 
-**Business Risk Factors:**
-- Industry classification: NAICS/SIC determines base risk level
-- Years in business: <2 years = startup risk, >10 = established
-- Revenue trajectory: declining revenue = potential adverse selection
-- Employee count & payroll: drives WC exposure
-- Funding stage: early-stage startups = less stable
+### LOSS RATIO CALCULATION
 
-**Property Risk Factors:**
-- Construction type: frame = highest risk, fire resistive = lowest
-- Year built & updates: old buildings without upgrades = higher risk
-- Protection class: 1-4 = good, 5-7 = average, 8-10 = poor/rural
-- Sprinklers + alarm: significant rate credits when present
-- Occupancy: some uses increase fire/liability exposure
-- Roof age: >20 years = likely exclusion or sublimit
-- Flood zone: A/V zones = flood exclusion or separate policy needed
+The analytics block provides pre-computed loss ratios. Use them directly — do NOT recalculate.
+The analytics block shows:
+- loss_ratio_pct: all-years gross ratio (for historical context)
+- loss_ratio_ex_largest_pct: ratio excluding the largest single event (for underlying business view)
+- annual_premium: estimated annual rate
+- loss_period_years: how many years the loss history spans
+- premium_source: how the premium was determined (confidence indicator)
 
-**Coverage Risk Factors:**
-- Minimum limits only = possible adverse selection
-- Very high limits with poor loss history = mismatch
-- No umbrella over primary with high revenue = gap concern
-- WC requested in monopolistic states (OH, WA, WY, ND) = state fund required
-- Cyber coverage for tech company without security controls = concern
-
-**Loss History Factors:**
-- Loss ratio: total incurred / total premium — most important metric
-- Claim frequency vs severity: frequent small claims = operational issue; rare large claims = catastrophic exposure
-- Open claims with large reserves: uncertainty in true loss picture
-- Trend: improving loss history = positive signal; worsening = negative
-- WC mod factor: >1.0 = worse than average, <1.0 = better than average
-
-### MISSING INFORMATION
-Flag these as critical missing items:
-- No loss runs (cannot evaluate claims history)
-- NAICS/SIC code missing (cannot determine industry class)
-- Revenue not provided (cannot assess business size or exposure)
-- Property details missing for property coverage request
-- No prior insurance information (cannot verify continuity)
-- Fire NOC not provided for property with fire exposure
-- Payroll not provided when WC coverage requested
-- No business description (cannot understand operations)
-
-## YOUR TASK
-
-You will receive:
-1. Extracted submission facts (structured JSON from all documents and form data)
-2. Retrieved policy/guideline excerpts from the knowledge base
-
-Evaluate the submission against the rules above. Use the retrieved evidence to support your assessment with specific policy language or guideline references.
-
-Every reason you cite must be grounded in either:
-- The underwriting rules above, OR
-- A specific retrieved excerpt from the knowledge base
-
-If evidence is insufficient for a definitive decision, say so and list what's missing.
-
-### LOSS RATIO CALCULATION — DO THIS EXPLICITLY
-
-When loss history is provided, you MUST calculate loss ratio yourself:
-1. Sum all incurred amounts across all claims in the loss history
-2. Sum all premiums from prior insurance
-3. Loss Ratio = Total Incurred / Total Premium × 100%
-
-Show your calculation explicitly in your response. Example:
-  "Total incurred: $847,000 + $18,900 + $6,700 = $872,600
-   Total premium (5 years): $156,500
-   Loss ratio: 872,600 / 156,500 = 557%"
-
-Do NOT estimate or round. Use the exact numbers from the extracted data.
-If loss runs ARE provided in the extracted data, do NOT say "loss runs not provided."
-
-### CRITICAL: TIME WINDOW FOR LOSS RATIO
-
-ALWAYS use the LAST 3 YEARS of data for loss ratio calculation, not the full history.
-- Count claims and incurred amounts ONLY from the last 3 policy years
-- Match premium to the SAME 3-year period
-- Claims older than 3 years are context only — they show trend but do NOT count in the ratio
+Use these numbers as-is. Do not perform your own arithmetic.
 
 ### NUANCE IN REFERRAL TRIGGERS
 
@@ -447,8 +360,6 @@ Referral triggers are NOT binary. Consider mitigating factors:
 
 - "Limits exceeding $5M" means ABOVE $5M, not equal to $5M. $5M exactly does NOT trigger referral.
 
-- A GL claim where Ironclad paid $0 (recovered from sub's carrier) should NOT count as a claim against Ironclad.
-
 When mitigating factors override a referral trigger, note it as:
 "Referral trigger [X] considered but overridden due to [mitigating factors]"
 
@@ -462,70 +373,47 @@ Use these anchors:
 - Clean history + multi-line + established business → winnability 0.80-0.95
 
 A carrier non-renewal is a MAJOR negative signal. Reduce winnability by 0.15-0.20 from baseline.
-An open claim with large reserves is another negative. Reduce by 0.10-0.15.
-Risk improvements post-loss are positive but only worth 0.05-0.10 uplift.
-
-### CONSTRUCTION ACCOUNT CALIBRATION
-
-For construction accounts specifically:
-- EMR below 0.90 + OSHA VPP + declining frequency = PREFERRED construction risk
-- Multi-line construction account ($200K+ premium) with clean history = winnability 0.75-0.90
-- Do NOT automatically penalize construction class if safety metrics are strong
-- Subcontractor management with written agreements + COI requirements = positive signal
-"""
+An open claim with large reserves is another negative. Reduce by 0.10-0.15."""
 
 
 APPETITE_ASSESSMENT_USER = """## Extracted Submission Facts
 {extraction_json}
 
-## Retrieved Evidence from Knowledge Base
+## Pre-Computed Analytics
+{analytics_json}
+
+## Evidence from Knowledge Base
 {evidence_chunks}
 
-Evaluate appetite fit using the underwriting rules in your instructions. Return JSON:
-{{
+Evaluate this submission against the underwriting rules above.
+Use the pre-computed analytics numbers exactly as provided — do not recalculate them.
+
+Return JSON:
+{
   "score": <1-5>,
-  "status": "<accept|review|decline|refer>",
-  "risk_tier": "<preferred|standard|substandard|decline>",
-  "reasons": ["reason 1 with specific rule citation", "reason 2"],
-  "referral_triggers": ["trigger if any"],
-  "decline_reasons": ["reason if declining"],
-  "missing_info_impact": ["what missing data could change this assessment"],
-  "key_concerns": ["concern 1", "concern 2"],
-  "positive_signals": ["signal 1", "signal 2"],
-  "business_risk_summary": "brief summary of business risk profile",
-  "property_risk_summary": "brief summary of property risk",
-  "loss_history_summary": "brief summary of loss experience",
-  "coverage_analysis": "observations on requested coverage vs risk profile"
-}}"""
+  "status": "accept|refer|decline",
+  "appetite_reasons": [
+    {
+      "rule": "DECLINE: Loss ratio exceeds 200%",
+      "severity": "decline|refer|positive|override",
+      "detail": "Loss ratio: X% (total incurred $X / total premium $X)"
+    }
+  ],
+  "referral_note": "",
+  "winnability": <0.0-1.0>
+}"""
 
 
 # ──────────────────────────────────────────────
-# Stage 5: Scoring & Routing
+# Stage 5: Scoring
 # ──────────────────────────────────────────────
 
-SCORING_SYSTEM = """You are a US commercial insurance triage analyst.
-Given extracted facts, appetite assessment, and evidence, compute scoring and routing.
+SCORING_SYSTEM = """You are a commercial insurance triage specialist.
 
-## SCORING METHODOLOGY
+Score this submission for priority and winnability.
 
-### Winnability Score (0.0-1.0)
-How likely is the carrier to successfully bind this account?
-- 0.8-1.0: Preferred risk, clean history, competitive pricing likely, multi-line potential
-- 0.6-0.8: Standard risk, bindable with standard pricing
-- 0.4-0.6: Borderline, may need modified coverage, exclusions, or higher deductible
-- 0.2-0.4: Substandard, only with significant restrictions or surplus lines
-- 0.0-0.2: Very unlikely to bind, significant issues
-
-Factors:
-- Clean loss history = high winnability
-- Multi-line opportunity = higher winnability (more premium, stickier)
-- Established business with growth = attractive account
-- Prior carrier non-renewal = lower winnability (adverse selection risk)
-- Gaps in coverage = lower winnability
-- Competitive expiring premium = price-sensitive, need good rate
-
-### Priority Score (0.0-1.0)
-How urgently should an underwriter review this?
+### Winnability
+How likely are we to win this account if we quote it?
 - 0.8-1.0: Review immediately — large premium, time-sensitive, competitive
 - 0.6-0.8: Review today — good risk, standard processing
 - 0.4-0.6: Review this week — needs more info or borderline
@@ -555,6 +443,14 @@ Questions should be:
 - Actionable (broker can answer or provide a document)
 - Prioritized by impact on the underwriting decision
 
+SUPPRESSION RULES — do NOT generate a broker question if:
+- The broker cover letter already explicitly addressed the topic
+- The account is a flat incumbent renewal with 10+ clean years (it's a rate check, not a distressed placement)
+- The information is documented in the ACORD form and not genuinely ambiguous
+- Routine maintenance is already documented as recurring (e.g. semi-annual inspections already on record)
+In those cases, the question is unnecessary noise. Only ask about things that are
+genuinely unresolved and material to the underwriting decision.
+
 Examples of good questions:
 - "Please provide 5-year loss runs for all lines requested"
 - "Can you confirm the building at 123 Main St has been updated — specifically roof, electrical, and plumbing? Year built shows 1968."
@@ -574,8 +470,7 @@ SCORING_USER = """## Submission Facts
 ## Evidence
 {evidence_chunks}
 
-IMPORTANT: Calculate winnability based on ACTUAL loss ratio from the data, not estimates.
-If the appetite assessment includes a calculated loss ratio, use that number.
+IMPORTANT: Use the loss ratio from the pre-computed analytics — do not estimate.
 A loss ratio >200% with open claims should result in winnability below 0.30.
 Carrier non-renewal should further reduce winnability.
 
@@ -612,7 +507,7 @@ Structure:
 2. **Snapshot**: 3-4 line executive summary — is this a good risk and why/why not
 3. **Business Profile**: What the company does, years in business, revenue, headcount, entity type
 4. **Property Summary**: Number of locations, construction types, values, protection, condition
-5. **Loss History**: Claim count by line, CALCULATED loss ratio with math shown, trend, largest loss, open claims
+5. **Loss History**: Claim count by line, loss ratio from the pre-computed analytics, trend, largest loss, open claims
 6. **Coverage Analysis**: Lines requested with limits/deductibles, vs what we'd recommend
 7. **Appetite Alignment**: Fit assessment citing specific underwriting rules
 8. **Risk Improvements**: Any risk mitigation steps taken (if mentioned in broker notes or extracted data)
@@ -628,12 +523,15 @@ Rules:
 - If loss data EXISTS in the extraction, do NOT say "loss runs not provided"
 - If property details are incomplete, state "PROPERTY DETAILS INCOMPLETE"
 - If revenue/payroll missing, flag it explicitly
-- Calculate loss ratio explicitly: Total Incurred / Total Premium = X%
+- Show the loss ratio from the PRE-COMPUTED ANALYTICS block exactly as given — do not recalculate
 - Use the REQUESTED effective date, not the expiring policy date
 - Use risk tier language: Preferred, Standard, Substandard, Decline"""
 
 
-BRIEF_USER = """## Extracted Facts
+BRIEF_USER = """## Source Documents for This Submission
+{source_documents}
+
+## Extracted Facts
 {extraction_json}
 
 ## Appetite Assessment
@@ -649,9 +547,13 @@ Generate the 1-page risk brief in markdown.
 
 CRITICAL RULES:
 1. If loss history data exists in Extracted Facts, do NOT say "LOSS RUNS NOT PROVIDED". The data IS the loss runs.
-2. For citations, use the actual document filename from _source_doc fields, not "[Source: doc, page X]".
-   Example: [Source: loss_runs_brighttech_5yr.pdf] or [Source: acord_125_126_140_brighttech.pdf]
+2. For citations, you MUST only use filenames from the "Source Documents for This Submission" list above.
+   Never cite a filename that is not in that list. Format: [Source: filename.pdf]
+   If you are unsure which document a fact came from, omit the citation rather than guess.
 3. Calculate loss ratio explicitly using the numbers in the extracted data. Show your math.
 4. Use the REQUESTED effective date from the broker submission or form data, not the current/expiring policy date.
-5. If risk improvements are mentioned in broker notes or extracted data, include them in the brief under a "Risk Improvements" subsection.
-6. Do not contradict the data — if claims are extracted, they were provided."""
+5. If risk improvements are mentioned in broker notes or extracted data, include them under "Risk Improvements".
+6. Do not contradict the data — if claims are extracted, they were provided.
+7. If the broker submission describes this as a renewal, rate check, or incumbent marketing,
+   open the Snapshot with that context: e.g. "Flat incumbent renewal submitted for competitive pricing."
+   Do not frame it as a fresh binding decision when the broker has stated otherwise."""

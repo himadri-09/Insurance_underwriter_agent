@@ -3,11 +3,14 @@ Analytics service: pure Python calculations for underwriting metrics.
 
 NO LLM calls. All math is deterministic.
 
-Key fixes:
-  1. Premium: estimates multi-year premium from prior_insurance + years_in_business,
-     also scans broker_notes and raw_fields for stated premium totals.
-  2. Claims: deduplicates by date_of_loss — same-date claims = one loss event.
-  3. Causation: classifies per loss EVENT (not per claim line), so fire + BI = one event.
+Key fixes (v3):
+  1. Gross incurred = sum of ALL deduplicated loss events (never just the largest).
+     stated_total_incurred is used only as a cross-check for double-count detection,
+     not as the authoritative total — that was causing smaller claims to disappear.
+  2. Premium: separates "find annual rate" from "scale to loss period".
+     Every source resolves to an annual rate first, then × loss_period_years.
+  3. Claims: deduplicates by date_of_loss — same-date claims = one loss event.
+  4. Causation: classifies per EVENT, not per claim line.
 """
 
 import re
@@ -28,21 +31,13 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
 
     # ══════════════════════════════════════════════════
     # Step 1: Deduplicate claims by date → loss EVENTS
-    # Fire + BI on same date = 1 event, not 2 claims
-    # SOURCE PRIORITY: loss_run > prior_insurance > everything else
-    # If same date appears from multiple document sources, use loss_run values only
     # ══════════════════════════════════════════════════
 
-    # First pass: collect claims with source tracking
     claims_with_source = []
     for loss in losses:
-        source = (loss.carrier or "").lower()
         claim_num = loss.claim_number or ""
-        # Detect source priority from claim number prefixes or carrier field
-        if claim_num or source:
-            priority = "loss_run"  # claims with claim numbers are from loss runs
-        else:
-            priority = "other"  # extracted from broker notes, fire reports, etc
+        source = (loss.carrier or "").lower()
+        priority = "loss_run" if (claim_num or source) else "other"
 
         claims_with_source.append({
             "date": loss.date_of_loss,
@@ -59,19 +54,14 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
             "source_priority": priority,
         })
 
-    # Second pass: group by date, prefer loss_run source
     events_by_date = defaultdict(list)
     for claim in claims_with_source:
         events_by_date[claim["date_normalized"]].append(claim)
 
-    # Third pass: for each date group, use loss_run claims if available
-    # Skip "other" source claims if loss_run claims exist for same date
     loss_events = []
     for date_key, claims in events_by_date.items():
         loss_run_claims = [c for c in claims if c["source_priority"] == "loss_run"]
         other_claims = [c for c in claims if c["source_priority"] != "loss_run"]
-
-        # Use loss_run claims if available, otherwise fall back to other
         authoritative_claims = loss_run_claims if loss_run_claims else other_claims
 
         event = {
@@ -84,91 +74,182 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
             "total_paid": sum(c["paid"] for c in authoritative_claims),
             "total_reserved": sum(c["reserved"] for c in authoritative_claims),
             "total_incurred": sum(c["incurred"] for c in authoritative_claims),
-            "is_open": any(c["status"] and c["status"].lower() in ("open", "reserved") for c in authoritative_claims),
+            "is_open": any(
+                c["status"] and c["status"].lower() in ("open", "reserved")
+                for c in authoritative_claims
+            ),
             "subrogation": any(c["subrogation"] for c in authoritative_claims),
-            "subrogation_details": next((c["subrogation"] for c in authoritative_claims if c["subrogation"]), ""),
+            "subrogation_details": next(
+                (c["subrogation"] for c in authoritative_claims if c["subrogation"]), ""
+            ),
             "duplicates_skipped": len(other_claims) if loss_run_claims else 0,
         }
         loss_events.append(event)
 
     total_events = len(loss_events)
-    total_incurred = sum(e["total_incurred"] for e in loss_events)
     total_paid = sum(e["total_paid"] for e in loss_events)
     total_reserved = sum(e["total_reserved"] for e in loss_events)
     open_events = [e for e in loss_events if e["is_open"]]
     open_reserves = sum(e["total_reserved"] for e in open_events)
 
-    # Largest loss event
-    largest_event = max(loss_events, key=lambda e: e["total_incurred"]) if loss_events else None
+    # ── Resolve total_incurred ───────────────────────────────────────────
+    #
+    # RULE: gross incurred = sum of ALL deduplicated loss events.
+    #   This is always the right number for "what did this account cost?"
+    #
+    # stated_total_incurred (from the loss run summary) is used ONLY as a
+    # double-count detector — if sum ≈ 2× stated, we had a summary-row bug
+    # and stated is more trustworthy.  In all other cases, we use the sum.
+    #
+    # We do NOT use stated_total_incurred as the sole authoritative value,
+    # because the LLM sometimes only captures the largest claim in the summary
+    # (losing the smaller claims), which is exactly what happened with BrightTech.
 
-    # Incurred excluding largest event
-    if largest_event and len(loss_events) > 1:
-        incurred_ex_largest = total_incurred - largest_event["total_incurred"]
-    else:
-        incurred_ex_largest = 0
+    sum_from_records = sum(e["total_incurred"] for e in loss_events)
+    stated_incurred = extraction.stated_total_incurred or 0
 
-    # ══════════════════════════════════════════════════
-    # Step 2: Premium — use AUTHORITATIVE source first
-    # Priority: stated_total_premium > text scan > broker notes > annualized
-    # ══════════════════════════════════════════════════
-
-    # Source 0: AUTHORITATIVE — stated_total_premium from loss run summary
-    premium_authoritative = extraction.stated_total_premium
-
-    # Source 1: Sum from prior_insurance records (current year only)
-    premium_from_records = sum(p.premium or 0 for p in premiums)
-
-    # Source 2: Scan broker notes
-    premium_from_notes = _extract_premium_from_text(extraction.broker_notes or "")
-
-    # Source 3: Scan raw_fields recursively
-    premium_from_raw = 0
-    for field in extraction.raw_fields:
-        if isinstance(field.value, dict):
-            premium_from_raw = max(premium_from_raw, _scan_dict_for_premium(field.value))
-        elif isinstance(field.value, str):
-            premium_from_raw = max(premium_from_raw, _extract_premium_from_text(field.value))
-
-    # Source 4: Deep text scan
-    all_text = (extraction.broker_notes or "")
-    for loss in losses:
-        if loss.description:
-            all_text += " " + loss.description
-    all_text += " " + (extraction.business_description or "")
-    premium_from_all_text = _extract_premium_from_text(all_text)
-
-    # Estimate multi-year from single-year
-    years_of_history = len(set(_extract_year(e["date"]) for e in loss_events if _extract_year(e["date"])))
-    years_of_history = max(years_of_history, 1)
-
-    # PICK BEST — authoritative first, then largest credible
-    if premium_authoritative > 0:
-        total_premium = premium_authoritative
-        premium_source = "loss_run_stated"
-    else:
-        all_sources = [
-            (premium_from_raw, "raw_field_scan"),
-            (premium_from_notes, "broker_notes"),
-            (premium_from_all_text, "text_scan"),
-        ]
-        best_ext = max(all_sources, key=lambda x: x[0])
-        if best_ext[0] > premium_from_records:
-            total_premium = best_ext[0]
-            premium_source = best_ext[1]
-        elif premium_from_records > 0:
-            estimated_years = max(years_of_history, 3)
-            total_premium = premium_from_records * estimated_years
-            premium_source = f"estimated_{estimated_years}yr"
+    if stated_incurred > 0 and sum_from_records > 0:
+        ratio_check = sum_from_records / stated_incurred
+        if 1.7 < ratio_check < 2.3:
+            # Sum is ~2× stated → summary row was extracted as a claim record (double-count)
+            log.warning("double_count_detected",
+                stated=stated_incurred,
+                summed=sum_from_records,
+                ratio=round(ratio_check, 2),
+                action="using_stated_to_correct")
+            total_incurred = stated_incurred
+            incurred_source = "loss_run_stated_double_count_corrected"
         else:
-            total_premium = 0
-            premium_source = "unknown"
+            # No double-count pattern — trust the sum from individual records
+            # (it may be higher than stated if the stated summary was incomplete)
+            total_incurred = sum_from_records
+            incurred_source = "summed_from_records"
+    elif sum_from_records > 0:
+        total_incurred = sum_from_records
+        incurred_source = "summed_from_records"
+    elif stated_incurred > 0:
+        # No individual records at all — fall back to stated total
+        total_incurred = stated_incurred
+        incurred_source = "loss_run_stated_only"
+    else:
+        total_incurred = 0
+        incurred_source = "no_data"
 
-    # Loss ratios
+    log.info("total_incurred_resolved",
+        stated=stated_incurred,
+        summed=sum_from_records,
+        used=total_incurred,
+        source=incurred_source)
+
+    largest_event = max(loss_events, key=lambda e: e["total_incurred"]) if loss_events else None
+    incurred_ex_largest = (
+        total_incurred - largest_event["total_incurred"]
+        if largest_event and len(loss_events) > 1
+        else 0
+    )
+
+    # ── Loss period years ────────────────────────────────────────────────
+    loss_years_set = set(_extract_year(e["date"]) for e in loss_events if _extract_year(e["date"]))
+    loss_period_start = min(loss_years_set) if loss_years_set else datetime.now().year
+    loss_period_end   = max(loss_years_set) if loss_years_set else datetime.now().year
+    loss_period_years = (loss_period_end - loss_period_start + 1) if loss_years_set else 1
+
+    # ══════════════════════════════════════════════════
+    # Step 2: Premium — resolve to annual rate, then scale to loss period
+    #
+    # Separates "find annual rate" from "scale to match loss period."
+    # Every source is resolved to a per-year number first, then × loss_period_years.
+    # ══════════════════════════════════════════════════
+
+    stated_premium    = extraction.stated_total_premium or 0
+    stated_is_annual  = extraction.stated_premium_is_annual
+    stated_prem_years = extraction.stated_premium_years
+
+    annual_premium = 0.0
+    premium_source = "unknown"
+    premium_confidence = "none"
+
+    if stated_premium > 0:
+        if stated_is_annual is True:
+            annual_premium = stated_premium
+            premium_source = "loss_run_stated_annual"
+            premium_confidence = "high"
+        elif stated_is_annual is False or (stated_prem_years and stated_prem_years > 1):
+            yrs = stated_prem_years or loss_period_years
+            annual_premium = stated_premium / max(yrs, 1)
+            premium_source = "loss_run_stated_multiyear"
+            premium_confidence = "high"
+        elif stated_prem_years == 1:
+            annual_premium = stated_premium
+            premium_source = "loss_run_stated_1yr"
+            premium_confidence = "high"
+        else:
+            # Ambiguous — compare to ACORD premium to infer
+            acord_premium = sum(p.premium or 0 for p in premiums)
+            if acord_premium > 0 and stated_premium > acord_premium * 2.5:
+                yrs = stated_prem_years or loss_period_years
+                annual_premium = stated_premium / max(yrs, 1)
+                premium_source = "loss_run_stated_inferred_multiyear"
+                premium_confidence = "medium"
+            else:
+                annual_premium = stated_premium
+                premium_source = "loss_run_stated_inferred_annual"
+                premium_confidence = "medium"
+
+    else:
+        # Prior insurance records — deduplicated by year
+        prior_by_year = {}
+        for p in premiums:
+            if p.premium and p.premium > 0:
+                yr = _extract_year(p.effective_date) or _extract_year(p.expiration_date)
+                key = yr or "unknown"
+                if key not in prior_by_year or p.premium > prior_by_year[key]:
+                    prior_by_year[key] = p.premium
+
+        if prior_by_year:
+            annual_premium = sum(prior_by_year.values()) / len(prior_by_year)
+            premium_source = f"prior_insurance_avg_{len(prior_by_year)}yr"
+            premium_confidence = "medium" if len(prior_by_year) >= 3 else "low"
+        else:
+            # Text / raw field scan — always treat result as annual
+            premium_from_notes = _extract_premium_from_text(extraction.broker_notes or "")
+            premium_from_raw = 0.0
+            for field in extraction.raw_fields:
+                if isinstance(field.value, dict):
+                    premium_from_raw = max(premium_from_raw, _scan_dict_for_premium(field.value))
+                elif isinstance(field.value, str):
+                    premium_from_raw = max(premium_from_raw, _extract_premium_from_text(field.value))
+
+            all_text = (extraction.broker_notes or "") + " " + (extraction.business_description or "")
+            for loss in losses:
+                if loss.description:
+                    all_text += " " + loss.description
+            premium_from_all_text = _extract_premium_from_text(all_text)
+
+            best_text = max(premium_from_notes, premium_from_raw, premium_from_all_text)
+            if best_text > 0:
+                annual_premium = best_text
+                premium_source = "text_scan_assumed_annual"
+                premium_confidence = "low"
+
+    # Scale annual rate to match the full loss period
+    total_premium = annual_premium * loss_period_years if annual_premium > 0 else 0.0
+
+    log.info("premium_resolved",
+        annual_premium=round(annual_premium, 2),
+        loss_period_years=loss_period_years,
+        total_premium_scaled=round(total_premium, 2),
+        premium_source=premium_source,
+        premium_confidence=premium_confidence,
+        incurred_source=incurred_source,
+        total_incurred=total_incurred)
+
+    # ── Loss ratios ──────────────────────────────────────────────────────
     loss_ratio = (total_incurred / total_premium * 100) if total_premium > 0 else None
     loss_ratio_ex_largest = (incurred_ex_largest / total_premium * 100) if total_premium > 0 else None
 
     # ══════════════════════════════════════════════════
-    # Step 3: Claim frequency and trend (by EVENT, not claim line)
+    # Step 3: Frequency and trend
     # ══════════════════════════════════════════════════
 
     events_by_year = {}
@@ -181,55 +262,43 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
 
     sorted_years = sorted(events_by_year.keys())
 
-    # Frequency trend
     if len(sorted_years) >= 2:
         mid = len(sorted_years) // 2
         recent_freq = sum(events_by_year[y] for y in sorted_years[mid:])
-        older_freq = sum(events_by_year[y] for y in sorted_years[:mid])
-        if recent_freq < older_freq:
-            frequency_trend = "declining"
-        elif recent_freq > older_freq:
-            frequency_trend = "increasing"
-        else:
-            frequency_trend = "stable"
+        older_freq  = sum(events_by_year[y] for y in sorted_years[:mid])
+        frequency_trend = "declining" if recent_freq < older_freq else (
+            "increasing" if recent_freq > older_freq else "stable"
+        )
     elif len(sorted_years) == 1:
         frequency_trend = "single_year_data"
     else:
         frequency_trend = "no_claims"
 
-    # Severity trend
     if len(sorted_years) >= 2 and largest_event:
-        largest_year = _extract_year(largest_event["date"])
         avg_severity_ex_largest = incurred_ex_largest / max(total_events - 1, 1)
         if largest_event["total_incurred"] > avg_severity_ex_largest * 5:
             severity_trend = "severity_spike"
         else:
             recent_sev = sum(severity_by_year.get(y, 0) for y in sorted_years[len(sorted_years)//2:])
-            older_sev = sum(severity_by_year.get(y, 0) for y in sorted_years[:len(sorted_years)//2])
-            if recent_sev > older_sev * 1.5:
-                severity_trend = "increasing"
-            elif recent_sev < older_sev * 0.5:
-                severity_trend = "declining"
-            else:
-                severity_trend = "stable"
+            older_sev  = sum(severity_by_year.get(y, 0) for y in sorted_years[:len(sorted_years)//2])
+            severity_trend = (
+                "increasing" if recent_sev > older_sev * 1.5 else
+                "declining"  if recent_sev < older_sev * 0.5 else
+                "stable"
+            )
     else:
         severity_trend = "insufficient_data"
 
-    # Combined trend description
     if frequency_trend == "stable" and severity_trend == "severity_spike":
         claim_trend = "stable_frequency_severity_spike"
-    elif frequency_trend == "declining":
-        claim_trend = "declining"
-    elif frequency_trend == "increasing":
-        claim_trend = "increasing"
+    elif frequency_trend in ("declining", "increasing"):
+        claim_trend = frequency_trend
     else:
         claim_trend = frequency_trend
 
-    # Clean years
     if sorted_years:
-        all_years = set(range(min(sorted_years), max(sorted_years) + 1))
-        claim_years = set(sorted_years)
-        clean_years = len(all_years - claim_years)
+        all_years   = set(range(min(sorted_years), max(sorted_years) + 1))
+        clean_years = len(all_years - set(sorted_years))
     else:
         clean_years = extraction.company.years_in_business or 0
 
@@ -237,15 +306,23 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         "total_events": total_events,
         "total_claim_lines": len(losses),
         "total_incurred": total_incurred,
+        "incurred_source": incurred_source,
         "total_paid": total_paid,
         "total_reserved": total_reserved,
-        "total_premium": total_premium,
+        "annual_premium": round(annual_premium, 2),
+        "total_premium": round(total_premium, 2),
         "premium_source": premium_source,
-        "premium_confidence": "high" if premium_source in ("loss_run_stated", "broker_notes") else "low",
+        "premium_confidence": premium_confidence,
+        "loss_period_years": loss_period_years,
+        "loss_period_start": loss_period_start,
+        "loss_period_end": loss_period_end,
         "loss_ratio_pct": round(loss_ratio, 1) if loss_ratio is not None else None,
         "loss_ratio_ex_largest_pct": round(loss_ratio_ex_largest, 1) if loss_ratio_ex_largest is not None else None,
         "normalized_loss_ratio_pct": round(loss_ratio_ex_largest, 1) if loss_ratio_ex_largest is not None else None,
-        "shock_loss_present": (largest_event["total_incurred"] > total_incurred * 0.5) if largest_event and total_incurred > 0 else False,
+        "shock_loss_present": (
+            largest_event["total_incurred"] > total_incurred * 0.5
+            if largest_event and total_incurred > 0 else False
+        ),
         "incurred_ex_largest": incurred_ex_largest,
         "open_events_count": len(open_events),
         "open_reserves": open_reserves,
@@ -261,6 +338,8 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
     # Step 4: Subrogation potential
     # ══════════════════════════════════════════════════
 
+    notes_lower = (extraction.broker_notes or "").lower()
+
     subrogation = False
     subrogation_details = ""
     for event in loss_events:
@@ -273,17 +352,12 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
             subrogation = True
             subrogation_details = event["descriptions"][0] if event["descriptions"] else ""
 
-    # Also check broker notes
-    notes_lower = (extraction.broker_notes or "").lower()
     if "subrogation" in notes_lower or "recovery against" in notes_lower:
         subrogation = True
         if not subrogation_details:
             subrogation_details = "Mentioned in broker notes"
 
-    analytics["subrogation"] = {
-        "potential": subrogation,
-        "details": subrogation_details[:300],
-    }
+    analytics["subrogation"] = {"potential": subrogation, "details": subrogation_details[:300]}
 
     # ══════════════════════════════════════════════════
     # Step 5: Suppression effectiveness
@@ -297,18 +371,15 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
             suppression_effective = True
             suppression_details = event["descriptions"][0] if event["descriptions"] else ""
 
-    analytics["suppression"] = {
-        "effective": suppression_effective,
-        "details": suppression_details[:300],
-    }
+    analytics["suppression"] = {"effective": suppression_effective, "details": suppression_details[:300]}
 
     # ══════════════════════════════════════════════════
-    # Step 6: Causation classification — per EVENT, not per claim line
+    # Step 6: Causation — per EVENT, not per claim line
     # ══════════════════════════════════════════════════
 
     causation_types = []
     for event in loss_events:
-        combined_desc = " ".join(event["descriptions"]).lower()
+        combined_desc  = " ".join(event["descriptions"]).lower()
         combined_types = " ".join(event["types"]).lower()
 
         if any(kw in combined_desc for kw in ["electrical", "wiring", "panel", "arc"]):
@@ -338,7 +409,6 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         else:
             causation_types.append("other")
 
-    # Systemic = same causation type appears more than once
     type_counts = defaultdict(int)
     for ct in causation_types:
         type_counts[ct] += 1
@@ -366,40 +436,33 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
     if any(kw in notes_lower for kw in ["non-renew", "nonrenew", "non-renewal", "cancelled by", "will not renew"]):
         non_renewal = True
 
-    # Try to extract carrier name from notes
     if non_renewal and not non_renewal_carriers_raw:
-        for carrier_name in ["Hartford", "Travelers", "Zurich", "EMC", "Progressive", "Texas Mutual", "Liberty Mutual", "Chubb", "AIG"]:
+        for carrier_name in ["Hartford", "Travelers", "Zurich", "EMC", "Progressive",
+                              "Texas Mutual", "Liberty Mutual", "Chubb", "AIG", "Employers Mutual"]:
             if carrier_name.lower() in notes_lower:
                 non_renewal_carriers_raw.append(carrier_name)
 
-    # NORMALIZE carrier names — strip suffixes and de-duplicate
-    # Hartford Financial Services + Hartford Financial Services Group = Hartford
     non_renewal_carriers = list(set(_normalize_carrier(c) for c in non_renewal_carriers_raw if c))
-    non_renewal_count = len(non_renewal_carriers)
 
     analytics["carrier"] = {
         "non_renewal": non_renewal,
-        "non_renewal_count": non_renewal_count,
+        "non_renewal_count": len(non_renewal_carriers),
         "non_renewal_carriers": non_renewal_carriers,
     }
 
     # ══════════════════════════════════════════════════
-    # Step 8: Business, property, coverage (unchanged)
+    # Step 8: Business, property, coverage
     # ══════════════════════════════════════════════════
 
-    revenue = extraction.company.annual_revenue or 0
-    payroll = extraction.company.annual_payroll or 0
+    revenue   = extraction.company.annual_revenue or 0
+    payroll   = extraction.company.annual_payroll or 0
     headcount = extraction.company.headcount or 0
-    years = extraction.company.years_in_business or 0
+    years     = extraction.company.years_in_business or 0
 
     analytics["business"] = {
-        "revenue": revenue,
-        "payroll": payroll,
-        "headcount": headcount,
-        "years_in_business": years,
-        "naics": extraction.company.naics_code,
-        "sic": extraction.company.sic_code,
-        "state": extraction.company.state,
+        "revenue": revenue, "payroll": payroll, "headcount": headcount,
+        "years_in_business": years, "naics": extraction.company.naics_code,
+        "sic": extraction.company.sic_code, "state": extraction.company.state,
         "entity_type": extraction.company.entity_type,
     }
 
@@ -408,15 +471,13 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         (loc.building_value or 0) + (loc.contents_value or 0) + (loc.bi_value or 0)
         for loc in locations
     )
-    sprinklered_count = sum(1 for loc in locations if loc.sprinklered)
+    sprinklered_count   = sum(1 for loc in locations if loc.sprinklered)
     unsprinklered_count = len(locations) - sprinklered_count
-    oldest_building = min((loc.year_built for loc in locations if loc.year_built), default=None)
+    oldest_building     = min((loc.year_built for loc in locations if loc.year_built), default=None)
 
     analytics["property"] = {
-        "location_count": len(locations),
-        "total_tiv": total_tiv,
-        "sprinklered_count": sprinklered_count,
-        "unsprinklered_count": unsprinklered_count,
+        "location_count": len(locations), "total_tiv": total_tiv,
+        "sprinklered_count": sprinklered_count, "unsprinklered_count": unsprinklered_count,
         "oldest_building_year": oldest_building,
     }
 
@@ -424,30 +485,29 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
     max_limit = max((c.limit or 0 for c in extraction.coverages), default=0)
 
     analytics["coverage"] = {
-        "lines_requested": lines_requested,
-        "line_count": len(lines_requested),
-        "max_single_limit": max_limit,
-        "multi_line": len(lines_requested) > 1,
+        "lines_requested": lines_requested, "line_count": len(lines_requested),
+        "max_single_limit": max_limit, "multi_line": len(lines_requested) > 1,
     }
 
     log.info("analytics_computed",
         loss_ratio=analytics["loss"]["loss_ratio_pct"],
         loss_ratio_ex_cat=analytics["loss"]["loss_ratio_ex_largest_pct"],
-        total_events=total_events,
-        total_claim_lines=len(losses),
-        open_events=len(open_events),
-        subrogation=subrogation,
-        non_renewal=non_renewal,
-        premium_source=premium_source,
-        total_premium=total_premium,
-        systemic=analytics["causation"]["systemic"],
+        total_events=total_events, total_claim_lines=len(losses),
+        total_incurred=total_incurred, incurred_source=incurred_source,
+        annual_premium=annual_premium, total_premium=total_premium,
+        loss_period_years=loss_period_years, premium_source=premium_source,
+        open_events=len(open_events), subrogation=subrogation,
+        non_renewal=non_renewal, systemic=analytics["causation"]["systemic"],
     )
 
     return analytics
 
 
+# ══════════════════════════════════════════════════════════════════════
+# Helpers
+# ══════════════════════════════════════════════════════════════════════
+
 def _extract_premium_from_text(text: str) -> float:
-    """Extract premium total from broker notes or free text."""
     patterns = [
         r'total\s+(?:annual\s+)?premium[:\s]*\$?([\d,]+)',
         r'total\s+current[:\s]*~?\$?([\d,]+)',
@@ -458,14 +518,12 @@ def _extract_premium_from_text(text: str) -> float:
         r'loss\s+ratio.*?(?:premium|premiums)[:\s]*\$?([\d,]+)',
         r'total\s+all\s+carriers[:\s]*~?\$?([\d,]+)',
     ]
-    best = 0
+    best = 0.0
     for pattern in patterns:
-        matches = re.findall(pattern, text.lower())
-        for m in matches:
+        for m in re.findall(pattern, text.lower()):
             try:
                 val = float(m.replace(",", ""))
-                # Sanity check: premium should be between $1K and $10M
-                if 1000 <= val <= 10000000 and val > best:
+                if 1000 <= val <= 10_000_000 and val > best:
                     best = val
             except ValueError:
                 pass
@@ -473,10 +531,9 @@ def _extract_premium_from_text(text: str) -> float:
 
 
 def _scan_dict_for_premium(d: dict, depth: int = 0) -> float:
-    """Recursively scan a dict for premium-related values."""
     if depth > 5:
-        return 0
-    best = 0
+        return 0.0
+    best = 0.0
     premium_keys = {
         "total_premium", "premium", "total_premium_paid", "premium_paid",
         "estimated_total_premium", "total_premiums", "annual_premium",
@@ -484,12 +541,12 @@ def _scan_dict_for_premium(d: dict, depth: int = 0) -> float:
     for key, val in d.items():
         key_lower = key.lower().replace(" ", "_")
         if key_lower in premium_keys:
-            if isinstance(val, (int, float)) and 1000 <= val <= 10000000:
+            if isinstance(val, (int, float)) and 1000 <= val <= 10_000_000:
                 best = max(best, float(val))
             elif isinstance(val, str):
                 try:
                     num = float(val.replace(",", "").replace("$", ""))
-                    if 1000 <= num <= 10000000:
+                    if 1000 <= num <= 10_000_000:
                         best = max(best, num)
                 except ValueError:
                     pass
@@ -520,17 +577,14 @@ def _extract_year(date_str: Optional[str]) -> Optional[int]:
 
 
 def _normalize_date(date_str: Optional[str]) -> Optional[str]:
-    """Normalize date to YYYY-MM-DD for consistent grouping."""
     if not date_str:
         return None
     try:
         for fmt in ("%m/%d/%Y", "%Y-%m-%d", "%m-%d-%Y", "%Y/%m/%d", "%m/%d/%y"):
             try:
-                dt = datetime.strptime(date_str.strip(), fmt)
-                return dt.strftime("%Y-%m-%d")
+                return datetime.strptime(date_str.strip(), fmt).strftime("%Y-%m-%d")
             except ValueError:
                 continue
-        # Try extracting just the date part if there's extra text
         match = re.search(r"(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})", date_str)
         if match:
             m, d, y = match.groups()
@@ -543,39 +597,23 @@ def _normalize_date(date_str: Optional[str]) -> Optional[str]:
 
 
 def _normalize_carrier(name: str) -> str:
-    """Normalize carrier names so Hartford Financial Services == Hartford.
-    
-    Strips common suffixes and applies known aliases.
-    Returns deduplicated carrier name for counting.
-    """
     if not name:
         return name
-    
-    # Strip common suffixes
     suffixes = [
-        " Financial Services Group", " Financial Services", 
-        " Insurance Company", " Insurance Companies", 
-        " Insurance Group", " Insurance Co",
-        " North America", " Group", " Inc.", " Inc", 
-        " LLC", " Corp", " Corporation", " Company", 
-        " Companies", " Mutual",
+        " Financial Services Group", " Financial Services",
+        " Insurance Company", " Insurance Companies", " Insurance Group",
+        " Insurance Co", " North America", " Group", " Inc.", " Inc",
+        " LLC", " Corp", " Corporation", " Company", " Companies", " Mutual",
     ]
     normalized = name.strip()
     for suffix in suffixes:
         if normalized.lower().endswith(suffix.lower()):
-            normalized = normalized[:len(normalized) - len(suffix)].strip()
-    
-    # Known aliases
+            normalized = normalized[: -len(suffix)].strip()
     aliases = {
-        "the hartford": "Hartford",
-        "hartford": "Hartford",
-        "travelers": "Travelers",
-        "zurich": "Zurich",
-        "emc": "EMC",
-        "employers mutual": "EMC",
-        "progressive commercial": "Progressive",
-        "progressive": "Progressive",
+        "the hartford": "Hartford", "hartford": "Hartford",
+        "travelers": "Travelers", "zurich": "Zurich",
+        "emc": "EMC", "employers mutual": "EMC",
+        "progressive commercial": "Progressive", "progressive": "Progressive",
         "texas mutual": "Texas Mutual",
     }
-    lower = normalized.lower()
-    return aliases.get(lower, normalized)
+    return aliases.get(normalized.lower(), normalized)

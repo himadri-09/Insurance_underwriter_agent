@@ -322,12 +322,24 @@ class ExtractorAgent:
                         merged["prior_insurance"].append(val)
                         log.info("prior_insurance_found_via_deep_scan_dict", key=key)
 
-
-            # Loss history
-            if "loss_history" in ext and isinstance(ext["loss_history"], list):
-                merged["loss_history"].extend(ext["loss_history"])
-            if "records" in ext and isinstance(ext["records"], list):
-                merged["loss_history"].extend(ext["records"])
+                # Loss history — deduplicate by claim_number to prevent double-count
+                # (same claim appears in both loss run and broker submission)
+                existing_claim_numbers = {
+                    r.get("claim_number") for r in merged["loss_history"]
+                    if isinstance(r, dict) and r.get("claim_number")
+                }
+                for key in ("loss_history", "records"):
+                    for record in ext.get(key, []):
+                        if not isinstance(record, dict):
+                            continue
+                        claim_num = record.get("claim_number")
+                        if claim_num and claim_num in existing_claim_numbers:
+                            log.info("duplicate_claim_skipped",
+                                claim_number=claim_num, source=ext.get("_source_doc"))
+                            continue
+                        merged["loss_history"].append(record)
+                        if claim_num:
+                            existing_claim_numbers.add(claim_num)
 
 
             # DEEP SCAN — catch claims under any key name
@@ -342,12 +354,18 @@ class ExtractorAgent:
                         merged["loss_history"].extend(val)
                         log.info("loss_history_found_via_deep_scan", key=key, count=len(val))
 
-
-            # Summary from loss runs — CAPTURE STATED PREMIUM
-            if "summary" in ext and isinstance(ext["summary"], dict):
-                for k, v in ext["summary"].items():
-                    if v and not merged["summary"].get(k):
-                        merged["summary"][k] = v
+            # Summary — loss_run is ALWAYS authoritative, overwrites everything else
+                if "summary" in ext and isinstance(ext["summary"], dict):
+                    doc_type = ext.get("_doc_type", "unknown")
+                    for k, v in ext["summary"].items():
+                        if v is None:
+                            continue
+                        if doc_type == "loss_run":
+                            # Loss run wins unconditionally — carrier already computed these correctly
+                            merged["summary"][k] = v
+                        elif not merged["summary"].get(k):
+                            # Non-loss-run source only fills gaps
+                            merged["summary"][k] = v
 
 
             # Legal
@@ -455,8 +473,7 @@ class ExtractorAgent:
 
     def _build_extraction_result(self, raw: dict, doc_id: str) -> ExtractionResult:
         result = ExtractionResult()
-
-
+ 
         # Company
         if "company" in raw and isinstance(raw["company"], dict):
             try:
@@ -466,8 +483,7 @@ class ExtractorAgent:
                 })
             except Exception:
                 pass
-
-
+ 
         # Locations
         for loc in raw.get("locations", []):
             if isinstance(loc, dict):
@@ -477,8 +493,7 @@ class ExtractorAgent:
                     }))
                 except Exception:
                     pass
-
-
+ 
         # Loss history
         for loss in raw.get("loss_history", []):
             if isinstance(loss, dict):
@@ -499,8 +514,7 @@ class ExtractorAgent:
                     result.loss_history.append(LossRecord(**normalized))
                 except Exception as e:
                     log.warning("loss_record_skipped", error=str(e), record=loss)
-
-
+ 
         # Coverages
         for cov in raw.get("coverages", []):
             if isinstance(cov, dict):
@@ -510,8 +524,7 @@ class ExtractorAgent:
                     }))
                 except Exception:
                     pass
-
-
+ 
         # Prior insurance
         for pi in raw.get("prior_insurance", []):
             if isinstance(pi, dict):
@@ -521,8 +534,7 @@ class ExtractorAgent:
                     }))
                 except Exception:
                     pass
-
-
+ 
         # Legal
         if "legal" in raw and isinstance(raw["legal"], dict):
             try:
@@ -531,28 +543,59 @@ class ExtractorAgent:
                 })
             except Exception:
                 pass
-
-
+ 
         # Broker notes
         result.broker_notes = raw.get("broker_notes", "").strip()
-
-
+ 
         # Requested effective date
         result.requested_effective_date = raw.get("requested_effective_date", "")
-
-
-        # STATED PREMIUM & INCURRED from loss run summary — AUTHORITATIVE
+ 
+        # ── STATED PREMIUM & INCURRED from loss run summary ─────────────────
+        # This is the authoritative source for total_incurred and total_premium.
+        # analytics_service.py reads these fields and uses them to compute loss ratios.
+        # Getting these right here prevents double-count and period-mismatch bugs.
         summary = raw.get("summary", {})
         if isinstance(summary, dict):
-            tp = self._to_float(summary.get("total_premium") or summary.get("total_premium_paid"))
-            if tp > 0:
-                result.stated_total_premium = tp
-
+ 
+            # --- Total incurred ---
             ti = self._to_float(summary.get("total_incurred"))
             if ti > 0:
                 result.stated_total_incurred = ti
-        
-        # FALLBACK: Scan markdown texts for premium if not found in structured data
+ 
+            # --- Total premium ---
+            tp = self._to_float(summary.get("total_premium") or summary.get("total_premium_paid"))
+            if tp > 0:
+                result.stated_total_premium = tp
+ 
+                # --- Is the stated premium annual or multi-year? ---
+                pia = summary.get("premium_is_annual")
+                if pia is True:
+                    result.stated_premium_is_annual = True
+                elif pia is False:
+                    result.stated_premium_is_annual = False
+                else:
+                    result.stated_premium_is_annual = None  # LLM didn't determine it
+ 
+                # --- How many years does the stated premium cover? ---
+                yc = summary.get("years_covered") or ""
+                result.stated_loss_years_covered = str(yc)
+ 
+                if yc and result.stated_premium_years is None:
+                    import re as _re
+                    # "5 years" or "5-year" → 5
+                    yr_match = _re.search(r'(\d+)\s*[-\s]?year', str(yc), _re.IGNORECASE)
+                    if yr_match:
+                        result.stated_premium_years = int(yr_match.group(1))
+                    else:
+                        # "2022-2026" or "03/2022 - 10/2026" → span = 2026-2022+1 = 5
+                        years_in_range = _re.findall(r'20\d{2}', str(yc))
+                        if len(years_in_range) >= 2:
+                            result.stated_premium_years = (
+                                int(years_in_range[-1]) - int(years_in_range[0]) + 1
+                            )
+ 
+        # ── FALLBACK: scan raw markdown texts for premium ────────────────────
+        # Runs only if the structured summary didn't yield a premium.
         if result.stated_total_premium == 0:
             import re
             all_texts = raw.get("_all_markdown_texts", [])
@@ -568,13 +611,16 @@ class ExtractorAgent:
                     for m in matches:
                         try:
                             val = float(m.replace(",", ""))
-                            if 1000 <= val <= 10000000 and val > result.stated_total_premium:
+                            if 1000 <= val <= 10_000_000 and val > result.stated_total_premium:
                                 result.stated_total_premium = val
                                 log.info("premium_found_via_markdown_scan", value=val, doc_id=doc_id)
                         except ValueError:
                             pass
-        
-        # FALLBACK: Calculate incurred from records if summary not provided
+ 
+        # ── FALLBACK: sum loss_history records if summary didn't have total_incurred ──
+        # NOTE: analytics_service.py detects double-count if this sum is ~2× stated.
+        # So even if the sum is wrong, analytics will correct it using stated_total_incurred.
+        # This fallback exists only to populate stated_total_incurred for the "missing info" check.
         if result.stated_total_incurred == 0.0 and result.loss_history:
             total_inc = sum(
                 (self._to_float(r.incurred) or (self._to_float(r.amount_paid) + self._to_float(r.amount_reserved)))
@@ -583,14 +629,25 @@ class ExtractorAgent:
             )
             if total_inc > 0:
                 result.stated_total_incurred = total_inc
-
-
+                log.info("stated_total_incurred_from_records_fallback",
+                    value=total_inc, doc_id=doc_id)
+ 
+        log.info("extraction_result_built",
+            doc_id=doc_id,
+            stated_premium=result.stated_total_premium,
+            stated_incurred=result.stated_total_incurred,
+            stated_premium_is_annual=result.stated_premium_is_annual,
+            stated_premium_years=result.stated_premium_years,
+            stated_years_covered=result.stated_loss_years_covered,
+            loss_records=len(result.loss_history),
+            prior_insurance=len(result.prior_insurance),
+        )
+ 
         # Raw fields for audit
         result.raw_fields = [
             ExtractedField(field_name="full_extraction", value=raw, confidence=1.0, source_doc_id=doc_id)
         ]
-
-
+ 
         # Missing fields
         missing = []
         if not result.company.name:
@@ -610,8 +667,7 @@ class ExtractorAgent:
         if not result.company.description:
             missing.append("business_description")
         result.missing_fields = missing
-
-
+ 
         return result
 
 

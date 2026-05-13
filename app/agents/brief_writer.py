@@ -121,11 +121,17 @@ class BriefWriterAgent:
             appetite_score=state.appetite.score,
         )
 
+        # Build the list of actual uploaded filenames for this submission
+        source_documents = "\n".join(
+            f"- {doc.filename}" for doc in state.documents if doc.filename
+        )
+
         prompt = BRIEF_USER.format(
             extraction_json=extraction_json,
             appetite_json=appetite_json,
             scoring_json=scoring_json,
             evidence_chunks=evidence,
+            source_documents=source_documents,
         )
 
         # Inject analytics before the prompt

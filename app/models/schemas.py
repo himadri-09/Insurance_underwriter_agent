@@ -44,6 +44,7 @@ class AppetiteStatus(str, Enum):
     REVIEW = "review"
     DECLINE = "decline"
     REFER = "refer"
+    REFER_WITH_CONDITIONS = "refer_with_conditions" 
 
 
 class SubmissionStatus(str, Enum):
@@ -207,8 +208,12 @@ class ExtractionResult(BaseModel):
     business_description: str = ""
     property_description: str = ""
     requested_effective_date: str = ""
-    stated_total_premium: float = 0.0   # from loss run summary — authoritative
-    stated_total_incurred: float = 0.0  # from loss run summary — authoritative
+    # ── Loss run summary totals (authoritative — set by extractor) ───────
+    stated_total_premium: float = 0.0          # total premium as stated in loss run summary
+    stated_total_incurred: float = 0.0         # total incurred as stated in loss run summary
+    stated_premium_is_annual: Optional[bool] = None   # True=annual, False=multi-yr total, None=unknown
+    stated_premium_years: Optional[int] = None         # how many years the stated premium covers
+    stated_loss_years_covered: str = ""                # e.g. "2022-2026" or "5 years"
     raw_fields: List[ExtractedField] = []
     missing_fields: List[str] = []
 
@@ -277,6 +282,32 @@ class UploadedDocument(BaseModel):
     classification_confidence: float = 0.0
 
 
+# ── Pipeline State ───────────────────────────────────
+# Field names here are used directly by brief_writer.py, pipeline.py, and routes.py.
+# Do NOT rename without updating every caller.
+
+class PipelineState(BaseModel):
+    submission_id: str = Field(default_factory=lambda: str(uuid4()))
+    status: SubmissionStatus = SubmissionStatus.UPLOADED
+    started_at: datetime = Field(default_factory=datetime.utcnow)
+
+    documents: List[UploadedDocument] = []
+    extraction: ExtractionResult = Field(default_factory=ExtractionResult)
+    retrieved_chunks: List[RetrievedChunk] = []
+    appetite: AppetiteAssessment = Field(default_factory=AppetiteAssessment)
+    scoring: SubmissionScoring = Field(default_factory=SubmissionScoring)
+
+    # Written by brief_writer.py — must stay as risk_brief / referral_note / citations
+    risk_brief: str = ""
+    referral_note: str = ""
+    citations: List[Citation] = []
+
+    lob: str = "other"
+    form_data: Dict[str, Any] = {}
+    errors: List[str] = []
+    current_step: str = ""
+
+
 # ── Final Output ─────────────────────────────────────
 
 class SubmissionOutput(BaseModel):
@@ -306,25 +337,3 @@ class SubmissionOutput(BaseModel):
     processing_time_seconds: float = 0.0
     model_versions: Dict[str, str] = {}
     errors: List[str] = []
-
-
-# ── Pipeline State ───────────────────────────────────
-
-class PipelineState(BaseModel):
-    submission_id: str = Field(default_factory=lambda: str(uuid4()))
-    status: SubmissionStatus = SubmissionStatus.UPLOADED
-    started_at: datetime = Field(default_factory=datetime.utcnow)
-
-    documents: List[UploadedDocument] = []
-    extraction: ExtractionResult = Field(default_factory=ExtractionResult)
-    retrieved_chunks: List[RetrievedChunk] = []
-    appetite: AppetiteAssessment = Field(default_factory=AppetiteAssessment)
-    scoring: SubmissionScoring = Field(default_factory=SubmissionScoring)
-    risk_brief: str = ""
-    referral_note: str = ""
-    citations: List[Citation] = []
-    lob: str = "other"
-
-    form_data: Dict[str, Any] = {}
-    errors: List[str] = []
-    current_step: str = ""
