@@ -432,7 +432,14 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
     revenue   = extraction.company.annual_revenue or 0
     payroll   = extraction.company.annual_payroll  or 0
     headcount = extraction.company.headcount        or 0
-    years     = extraction.company.years_in_business or 0
+    years = extraction.company.years_in_business or 0
+
+    if years == 0 and extraction.company.year_established:
+        try:
+            years = datetime.now().year - int(extraction.company.year_established)
+            years = max(0, years)
+        except (ValueError, TypeError):
+            pass
 
     analytics["business"] = {
         "revenue":          revenue,
