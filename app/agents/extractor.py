@@ -130,6 +130,78 @@ IMAGE_PROMPT = """Describe this image for an insurance underwriter. Note:
 Return JSON: {"description": "", "damage_visible": false, "damage_severity": "", "property_type": "", "safety_concerns": [], "condition_assessment": "", "relevant_details": []}"""
 
 
+# ── Loss history dedup helpers (module-level, used by _merge_extractions) ────
+
+def _loss_year(record: dict) -> str:
+    """Extract 4-digit year from date_of_loss regardless of format.
+    '2021' → '2021', '11/19/2021' → '1119' ... wait, str[:4] of '11/19' = '11/1'
+    So we look for the first 4-digit sequence instead."""
+    import re
+    dol = str(record.get("date_of_loss") or "")
+    match = re.search(r'(20\d{2})', dol)
+    return match.group(1) if match else ""
+
+
+def _incurred_amount(record: dict) -> float:
+    """Return the best available incurred amount from a loss record."""
+    return (
+        record.get("incurred")
+        or record.get("total_incurred")
+        or record.get("amount_paid")
+        or 0
+    )
+
+
+def _merge_loss_record(merged_list: list, record: dict, is_loss_run: bool, source: str) -> None:
+    """
+    Add a loss record to merged_list using three-tier deduplication.
+
+    Tier 1 — exact claim number match: both records have a claim number and it matches.
+    Tier 2 — year + amount match: same loss year AND same incurred amount.
+             This catches broker submission summaries (no claim number) vs
+             loss run detail rows (with claim number) for the same event.
+    Tier 3 — loss-run wins: when a duplicate is found and the incoming record
+             is from the loss run while the existing one is not, upgrade
+             (replace) the existing record with the richer loss-run record.
+    """
+    claim_num = record.get("claim_number")
+    rec_year  = _loss_year(record)
+    rec_amt   = _incurred_amount(record)
+
+    duplicate  = False
+    replace_idx = None
+
+    for i, existing in enumerate(merged_list):
+        ex_claim_num = existing.get("claim_number")
+        ex_year      = _loss_year(existing)
+        ex_amt       = _incurred_amount(existing)
+
+        # Tier 1: both records have claim numbers and they match
+        if claim_num and ex_claim_num and claim_num == ex_claim_num:
+            duplicate = True
+            if is_loss_run and not ex_claim_num:
+                replace_idx = i
+            break
+
+        # Tier 2: same year + same incurred amount
+        if rec_year and ex_year and rec_year == ex_year and rec_amt and rec_amt == ex_amt:
+            duplicate = True
+            # Upgrade only if incoming is from loss run and existing has no claim number
+            if is_loss_run and not ex_claim_num:
+                replace_idx = i
+            break
+
+    if duplicate and replace_idx is not None:
+        log.info("duplicate_claim_upgraded",
+            year=rec_year, amount=rec_amt,
+            claim_number=claim_num, source=source)
+        merged_list[replace_idx] = record
+    elif duplicate:
+        log.info("duplicate_claim_skipped",
+            claim_number=claim_num, year=rec_year, source=source)
+    else:
+        merged_list.append(record)
+
 
 class ExtractorAgent:
     def __init__(self):
@@ -206,12 +278,12 @@ class ExtractorAgent:
         result["_confidence"] = confidence
         # Store raw markdown for premium text scanning in analytics
         result["_markdown_text"] = markdown
-        
+
         # Log critical fields
         loss_history = result.get("loss_history", [])
         prior_insurance = result.get("prior_insurance", [])
         summary = result.get("summary", {})
-        
+
         log.info(
             "llm_extraction_done",
             filename=filename,
@@ -224,7 +296,7 @@ class ExtractorAgent:
             has_summary=bool(summary),
             summary_total_premium=summary.get("total_premium") if isinstance(summary, dict) else None,
         )
-        
+
         return result
 
 
@@ -254,49 +326,49 @@ class ExtractorAgent:
             "_all_markdown_texts": [],  # raw markdown for premium text scanning
         }
 
-
         # Log all extractions before merge
         log.info(
             "merge_starting",
             total_extractions=len(extractions),
             extraction_sources=[ext.get("_source_doc", "unknown") for ext in extractions if isinstance(ext, dict)],
         )
-        
+
         for idx, ext in enumerate(extractions):
             if not isinstance(ext, dict):
                 continue
-            
+
+            source     = ext.get("_source_doc", "unknown")
+            doc_type   = ext.get("_doc_type", "unknown")
+            is_loss_run = doc_type == "loss_run"
+
             # LOG THE ACTUAL KEYS and full JSON so we can debug
             log.info(
                 "merging_extraction",
                 index=idx,
-                source=ext.get("_source_doc", "unknown"),
-                doc_type=ext.get("_doc_type", "unknown"),
+                source=source,
+                doc_type=doc_type,
                 keys=list(ext.keys()),
                 loss_history_in_ext=len(ext.get("loss_history", [])) if isinstance(ext.get("loss_history"), list) else 0,
                 prior_insurance_in_ext=len(ext.get("prior_insurance", [])) if isinstance(ext.get("prior_insurance"), list) else 0,
                 full_json=ext,
             )
-            
+
             # Collect raw markdown for premium text scanning
             if ext.get("_markdown_text"):
                 merged["_all_markdown_texts"].append(ext["_markdown_text"])
 
-
-            # Company
+            # ── Company ──────────────────────────────────────────────────────
             if "company" in ext and isinstance(ext["company"], dict):
                 for k, v in ext["company"].items():
                     if v and not merged["company"].get(k):
                         merged["company"][k] = v
 
-
-            # Lists
+            # ── Simple lists ─────────────────────────────────────────────────
             for key in ("locations", "coverages", "other_fields"):
                 if key in ext and isinstance(ext[key], list):
                     merged[key].extend(ext[key])
 
-
-            # Prior insurance — handle list or dict
+            # ── Prior insurance ───────────────────────────────────────────────
             if "prior_insurance" in ext:
                 pi = ext["prior_insurance"]
                 if isinstance(pi, list):
@@ -306,12 +378,13 @@ class ExtractorAgent:
             if "policies" in ext and isinstance(ext["policies"], list):
                 merged["prior_insurance"].extend(ext["policies"])
 
-
             # DEEP SCAN for prior insurance / policies under any key
             for key, val in ext.items():
-                if key.startswith("_") or key in ("company", "locations", "coverages",
+                if key.startswith("_") or key in (
+                    "company", "locations", "coverages",
                     "loss_history", "records", "legal", "summary", "broker_notes",
-                    "other_fields", "prior_insurance", "policies"):
+                    "other_fields", "prior_insurance", "policies",
+                ):
                     continue
                 if isinstance(val, list) and val and isinstance(val[0], dict):
                     if any(k in val[0] for k in ("policy_number", "expiration_date", "cancelled_by_carrier")):
@@ -322,53 +395,47 @@ class ExtractorAgent:
                         merged["prior_insurance"].append(val)
                         log.info("prior_insurance_found_via_deep_scan_dict", key=key)
 
-                # Loss history — deduplicate by claim_number to prevent double-count
-                # (same claim appears in both loss run and broker submission)
-                existing_claim_numbers = {
-                    r.get("claim_number") for r in merged["loss_history"]
-                    if isinstance(r, dict) and r.get("claim_number")
-                }
-                for key in ("loss_history", "records"):
-                    for record in ext.get(key, []):
-                        if not isinstance(record, dict):
-                            continue
-                        claim_num = record.get("claim_number")
-                        if claim_num and claim_num in existing_claim_numbers:
-                            log.info("duplicate_claim_skipped",
-                                claim_number=claim_num, source=ext.get("_source_doc"))
-                            continue
-                        merged["loss_history"].append(record)
-                        if claim_num:
-                            existing_claim_numbers.add(claim_num)
+            # ── Loss history — three-tier deduplication ───────────────────────
+            # Process explicit loss_history and records keys with dedup.
+            # Tier 1: exact claim number match.
+            # Tier 2: same loss year + same incurred amount (broker vs loss run).
+            # Tier 3: loss-run record always upgrades a weaker non-loss-run record.
+            for key in ("loss_history", "records"):
+                for record in ext.get(key, []):
+                    if not isinstance(record, dict):
+                        continue
+                    _merge_loss_record(merged["loss_history"], record, is_loss_run, source)
 
-
-            # DEEP SCAN — catch claims under any key name
+            # DEEP SCAN — catch loss claims stored under any other key name,
+            # also run through dedup so deep-scanned records don't bypass it.
             for key, val in ext.items():
-                if key.startswith("_") or key in ("company", "locations", "coverages",
+                if key.startswith("_") or key in (
+                    "company", "locations", "coverages",
                     "prior_insurance", "legal", "summary", "broker_notes",
                     "other_fields", "image_descriptions", "classification",
-                    "loss_history", "records", "requested_effective_date"):
+                    "loss_history", "records", "requested_effective_date",
+                ):
                     continue
                 if isinstance(val, list) and val and isinstance(val[0], dict):
                     if any(k in val[0] for k in ("date_of_loss", "claim_number", "amount_paid", "incurred", "total_incurred")):
-                        merged["loss_history"].extend(val)
                         log.info("loss_history_found_via_deep_scan", key=key, count=len(val))
+                        for record in val:
+                            if isinstance(record, dict):
+                                _merge_loss_record(merged["loss_history"], record, is_loss_run, source)
 
-            # Summary — loss_run is ALWAYS authoritative, overwrites everything else
-                if "summary" in ext and isinstance(ext["summary"], dict):
-                    doc_type = ext.get("_doc_type", "unknown")
-                    for k, v in ext["summary"].items():
-                        if v is None:
-                            continue
-                        if doc_type == "loss_run":
-                            # Loss run wins unconditionally — carrier already computed these correctly
-                            merged["summary"][k] = v
-                        elif not merged["summary"].get(k):
-                            # Non-loss-run source only fills gaps
-                            merged["summary"][k] = v
+            # ── Summary — loss_run is ALWAYS authoritative ────────────────────
+            if "summary" in ext and isinstance(ext["summary"], dict):
+                for k, v in ext["summary"].items():
+                    if v is None:
+                        continue
+                    if is_loss_run:
+                        # Loss run wins unconditionally — carrier already computed these
+                        merged["summary"][k] = v
+                    elif not merged["summary"].get(k):
+                        # Non-loss-run source only fills gaps
+                        merged["summary"][k] = v
 
-
-            # Legal
+            # ── Legal ─────────────────────────────────────────────────────────
             if "legal" in ext and isinstance(ext["legal"], dict):
                 for k, v in ext["legal"].items():
                     if v and not merged["legal"].get(k):
@@ -378,42 +445,35 @@ class ExtractorAgent:
                 if field in ext and ext[field]:
                     merged["legal"][field] = ext[field]
 
-
-            # Broker notes
+            # ── Broker notes ──────────────────────────────────────────────────
             if ext.get("broker_notes"):
                 merged["broker_notes"] += "\n" + str(ext["broker_notes"])
 
-
-            # Requested effective date
+            # ── Requested effective date ──────────────────────────────────────
             if ext.get("requested_effective_date") and not merged["requested_effective_date"]:
                 merged["requested_effective_date"] = str(ext["requested_effective_date"])
 
-
-            # Image descriptions
-            if ext.get("_doc_type") == "incident_photo":
+            # ── Image descriptions ────────────────────────────────────────────
+            if doc_type == "incident_photo":
                 merged["image_descriptions"].append({
-                    "filename": ext.get("_source_doc", ""),
+                    "filename": source,
                     "description": ext.get("description", ""),
                     "damage_visible": ext.get("damage_visible", False),
                 })
 
-
-            # Detect non-renewal from any document
+            # ── Detect non-renewal from any document ──────────────────────────
             notes = self._to_str_lower(ext.get("broker_notes", ""))
             if any(kw in notes for kw in ["non-renew", "nonrenew", "will not renew", "non-renewal"]):
-                # Mark in prior_insurance if we can find the carrier
                 for pi in merged["prior_insurance"]:
                     if isinstance(pi, dict) and not pi.get("cancelled_by_carrier"):
                         pi["cancelled_by_carrier"] = True
 
-
         # ══════════════════════════════════════════════════
         # POST-PROCESSING: Auto-calculate missing summary totals
         # ══════════════════════════════════════════════════
-        # If summary exists but key totals are missing/zero, calculate from loss_history records
         if merged["loss_history"] and merged["summary"]:
             summary = merged["summary"]
-            
+
             # Calculate total_incurred if missing or zero
             if not self._to_float(summary.get("total_incurred")):
                 total_inc = sum(
@@ -425,7 +485,7 @@ class ExtractorAgent:
                 )
                 if total_inc > 0:
                     summary["total_incurred"] = total_inc
-            
+
             # Calculate total_paid if missing or zero
             if not self._to_float(summary.get("total_paid")):
                 total_paid = sum(
@@ -435,11 +495,11 @@ class ExtractorAgent:
                 )
                 if total_paid > 0:
                     summary["total_paid"] = total_paid
-            
+
             # Calculate total_claims if missing or zero
             if not summary.get("total_claims") or summary.get("total_claims") == 0:
                 summary["total_claims"] = len(merged["loss_history"])
-            
+
             # Calculate open_claims if missing
             if not summary.get("open_claims"):
                 open_count = sum(
@@ -448,12 +508,10 @@ class ExtractorAgent:
                     if isinstance(r, dict)
                     and self._to_str_lower(r.get("status")) in ("open", "reserved")
                 )
-
                 if open_count > 0:
                     summary["open_claims"] = open_count
 
-
-        # Log final merged state with comprehensive details
+        # Log final merged state
         log.info(
             "merge_complete",
             total_loss_history=len(merged["loss_history"]),
@@ -467,13 +525,12 @@ class ExtractorAgent:
             merged_state=merged,
         )
 
-
         return merged
 
 
     def _build_extraction_result(self, raw: dict, doc_id: str) -> ExtractionResult:
         result = ExtractionResult()
- 
+
         # Company
         if "company" in raw and isinstance(raw["company"], dict):
             try:
@@ -483,7 +540,7 @@ class ExtractorAgent:
                 })
             except Exception:
                 pass
- 
+
         # Locations
         for loc in raw.get("locations", []):
             if isinstance(loc, dict):
@@ -493,7 +550,7 @@ class ExtractorAgent:
                     }))
                 except Exception:
                     pass
- 
+
         # Loss history
         for loss in raw.get("loss_history", []):
             if isinstance(loss, dict):
@@ -514,7 +571,7 @@ class ExtractorAgent:
                     result.loss_history.append(LossRecord(**normalized))
                 except Exception as e:
                     log.warning("loss_record_skipped", error=str(e), record=loss)
- 
+
         # Coverages
         for cov in raw.get("coverages", []):
             if isinstance(cov, dict):
@@ -524,7 +581,7 @@ class ExtractorAgent:
                     }))
                 except Exception:
                     pass
- 
+
         # Prior insurance
         for pi in raw.get("prior_insurance", []):
             if isinstance(pi, dict):
@@ -534,7 +591,7 @@ class ExtractorAgent:
                     }))
                 except Exception:
                     pass
- 
+
         # Legal
         if "legal" in raw and isinstance(raw["legal"], dict):
             try:
@@ -543,30 +600,27 @@ class ExtractorAgent:
                 })
             except Exception:
                 pass
- 
+
         # Broker notes
         result.broker_notes = raw.get("broker_notes", "").strip()
- 
+
         # Requested effective date
         result.requested_effective_date = raw.get("requested_effective_date", "")
- 
+
         # ── STATED PREMIUM & INCURRED from loss run summary ─────────────────
-        # This is the authoritative source for total_incurred and total_premium.
-        # analytics_service.py reads these fields and uses them to compute loss ratios.
-        # Getting these right here prevents double-count and period-mismatch bugs.
         summary = raw.get("summary", {})
         if isinstance(summary, dict):
- 
+
             # --- Total incurred ---
             ti = self._to_float(summary.get("total_incurred"))
             if ti > 0:
                 result.stated_total_incurred = ti
- 
+
             # --- Total premium ---
             tp = self._to_float(summary.get("total_premium") or summary.get("total_premium_paid"))
             if tp > 0:
                 result.stated_total_premium = tp
- 
+
                 # --- Is the stated premium annual or multi-year? ---
                 pia = summary.get("premium_is_annual")
                 if pia is True:
@@ -574,28 +628,25 @@ class ExtractorAgent:
                 elif pia is False:
                     result.stated_premium_is_annual = False
                 else:
-                    result.stated_premium_is_annual = None  # LLM didn't determine it
- 
+                    result.stated_premium_is_annual = None
+
                 # --- How many years does the stated premium cover? ---
                 yc = summary.get("years_covered") or ""
                 result.stated_loss_years_covered = str(yc)
- 
+
                 if yc and result.stated_premium_years is None:
                     import re as _re
-                    # "5 years" or "5-year" → 5
                     yr_match = _re.search(r'(\d+)\s*[-\s]?year', str(yc), _re.IGNORECASE)
                     if yr_match:
                         result.stated_premium_years = int(yr_match.group(1))
                     else:
-                        # "2022-2026" or "03/2022 - 10/2026" → span = 2026-2022+1 = 5
                         years_in_range = _re.findall(r'20\d{2}', str(yc))
                         if len(years_in_range) >= 2:
                             result.stated_premium_years = (
                                 int(years_in_range[-1]) - int(years_in_range[0]) + 1
                             )
- 
+
         # ── FALLBACK: scan raw markdown texts for premium ────────────────────
-        # Runs only if the structured summary didn't yield a premium.
         if result.stated_total_premium == 0:
             import re
             all_texts = raw.get("_all_markdown_texts", [])
@@ -616,11 +667,8 @@ class ExtractorAgent:
                                 log.info("premium_found_via_markdown_scan", value=val, doc_id=doc_id)
                         except ValueError:
                             pass
- 
+
         # ── FALLBACK: sum loss_history records if summary didn't have total_incurred ──
-        # NOTE: analytics_service.py detects double-count if this sum is ~2× stated.
-        # So even if the sum is wrong, analytics will correct it using stated_total_incurred.
-        # This fallback exists only to populate stated_total_incurred for the "missing info" check.
         if result.stated_total_incurred == 0.0 and result.loss_history:
             total_inc = sum(
                 (self._to_float(r.incurred) or (self._to_float(r.amount_paid) + self._to_float(r.amount_reserved)))
@@ -631,7 +679,7 @@ class ExtractorAgent:
                 result.stated_total_incurred = total_inc
                 log.info("stated_total_incurred_from_records_fallback",
                     value=total_inc, doc_id=doc_id)
- 
+
         log.info("extraction_result_built",
             doc_id=doc_id,
             stated_premium=result.stated_total_premium,
@@ -642,12 +690,12 @@ class ExtractorAgent:
             loss_records=len(result.loss_history),
             prior_insurance=len(result.prior_insurance),
         )
- 
+
         # Raw fields for audit
         result.raw_fields = [
             ExtractedField(field_name="full_extraction", value=raw, confidence=1.0, source_doc_id=doc_id)
         ]
- 
+
         # Missing fields
         missing = []
         if not result.company.name:
@@ -667,7 +715,7 @@ class ExtractorAgent:
         if not result.company.description:
             missing.append("business_description")
         result.missing_fields = missing
- 
+
         return result
 
 
@@ -678,16 +726,13 @@ class ExtractorAgent:
                 if v and hasattr(extraction.company, k) and not getattr(extraction.company, k, None):
                     setattr(extraction.company, k, v)
 
-
         if form_data.get("business_description"):
             extraction.business_description = str(form_data["business_description"])
             if not extraction.company.description:
                 extraction.company.description = extraction.business_description
 
-
         if form_data.get("property_description"):
             extraction.property_description = str(form_data["property_description"])
-
 
         incidents = form_data.get("incidents", [])
         if isinstance(incidents, list):
@@ -705,17 +750,14 @@ class ExtractorAgent:
         state.status = "extracting"
         state.current_step = "extraction"
 
-
         # Step 1: Parse all PDFs in parallel
         log.info("batch_extraction_starting", total_files=len(files))
         parsed = await self.parser.parse_batch(files)
         log.info("batch_parse_complete", pdfs_parsed=len(parsed))
 
-
         # Step 2: Build extraction tasks
         pdf_tasks = []
         image_tasks = []
-
 
         for doc in state.documents:
             if doc.filename not in files:
@@ -725,11 +767,9 @@ class ExtractorAgent:
             elif doc.file_type in ("png", "jpg", "jpeg", "tiff"):
                 image_tasks.append(self._extract_single_image(doc.filename, files[doc.filename], doc.file_type))
 
-
         # Step 3: Run ALL extractions in parallel
         log.info("parallel_extraction_starting", pdf_count=len(pdf_tasks), image_count=len(image_tasks))
         all_results = await asyncio.gather(*pdf_tasks, *image_tasks, return_exceptions=True)
-
 
         all_raw = []
         for result in all_results:
@@ -747,19 +787,15 @@ class ExtractorAgent:
                         doc.classification_confidence = result.get("_confidence", 0.0)
                 all_raw.append(result)
 
-
         log.info("parallel_extraction_done", successful=len(all_raw), errors=len(state.errors))
-
 
         # Step 4: Merge
         combined = self._merge_extractions(all_raw)
         state.extraction = self._build_extraction_result(combined, state.submission_id)
 
-
         # Step 5: Merge form data
         if state.form_data:
             self._merge_form_data(state.extraction, state.form_data)
-
 
         # Step 6: Detect LOB
         if state.extraction.coverages:
@@ -776,7 +812,6 @@ class ExtractorAgent:
                     break
             if len(state.extraction.coverages) > 1:
                 state.lob = "multi_line"
-
 
         log.info("extraction_complete",
             company=state.extraction.company.name,

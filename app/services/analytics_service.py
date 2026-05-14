@@ -237,10 +237,10 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         recent_freq = sum(events_by_year[y] for y in sorted_years[mid:])
         older_freq  = sum(events_by_year[y] for y in sorted_years[:mid])
         frequency_trend = (
-            "declining"  if recent_freq < older_freq else
-            "increasing" if recent_freq > older_freq else
-            "stable"
-        )
+    "declining"  if (recent_freq < older_freq * 0.5 and older_freq - recent_freq >= 2) else
+    "increasing" if (recent_freq > older_freq * 1.5 and recent_freq - older_freq >= 2) else
+    "stable"
+)
     elif len(sorted_years) == 1:
         frequency_trend = "single_year_data"
     else:
@@ -388,10 +388,20 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         type_counts[ct] += 1
     repeated_types = [t for t, c in type_counts.items() if c > 1]
 
+    # Systemic requires meaningful repetition, not incidental overlap.
+# A single cause appearing twice across 5+ events is normal portfolio noise.
+# Threshold: same cause 3+ times, OR same cause 2+ times AND dominates (>60% of all events).
+
+    total_typed = len(causation_types)
+    systemic = any(
+        c >= 3 or (c >= 2 and c / max(total_typed, 1) > 0.60)
+        for c in type_counts.values()
+    )
+
     analytics["causation"] = {
         "types":          causation_types,
         "unique_types":   list(set(causation_types)),
-        "systemic":       len(repeated_types) > 0,
+        "systemic":       systemic,
         "repeated_types": repeated_types,
         "isolated":       len(repeated_types) == 0,
     }
@@ -469,7 +479,7 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         "oldest_building_year": oldest_building,
     }
 
-    lines_requested = list(set(c.coverage_type for c in extraction.coverages if c.coverage_type))
+    lines_requested = list(set(c.lob for c in extraction.coverages if c.lob))
     max_limit       = max((c.limit or 0 for c in extraction.coverages), default=0)
 
     analytics["coverage"] = {

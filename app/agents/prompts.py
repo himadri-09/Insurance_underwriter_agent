@@ -429,12 +429,17 @@ Priority boosters:
 
 ### Queue Assignment
 Route to the appropriate underwriter queue:
-- "preferred-commercial": Clean risks, score 4-5, standard class
-- "standard-commercial": Average risks, score 3-4, standard processing
+- "preferred-commercial": Clean risks, score 5, no triggers fired
+- "standard-commercial":  Score 3-4, TIV <$10M, minor triggers fully overridden
 - "specialty-commercial": Higher-hazard class, construction, manufacturing, restaurants
-- "large-account": Revenue >$50M or premium >$100K, needs senior UW
-- "referral-senior-uw": Referral triggers hit, needs authority approval
-- "decline-review": Score 1-2, likely decline but needs documentation
+- "large-account":        TIV >$10M, multi-location schedule, multi-line, score 3-4.
+                          Use this for habitational, property schedules, and middle-market
+                          accounts that are well-aligned but need property UW review.
+- "referral-senior-uw":   ONLY for score 1-2, open reserves >$100K, active litigation,
+                          carrier non-renewal, or TIV >$50M. Do NOT assign just because
+                          referral triggers fired — if triggers are overridden by mitigating
+                          factors and score is 3+, use large-account or standard-commercial.
+- "decline-review":       Score 1, hard decline triggers, no mitigations present
 
 ### Broker Follow-up Questions
 Generate 3-5 specific questions to ask the broker for missing information.
@@ -525,7 +530,26 @@ Rules:
 - If revenue/payroll missing, flag it explicitly
 - Show the loss ratio from the PRE-COMPUTED ANALYTICS block exactly as given — do not recalculate
 - Use the REQUESTED effective date, not the expiring policy date
-- Use risk tier language: Preferred, Standard, Substandard, Decline"""
+- Use risk tier language: Preferred, Standard, Substandard, Decline
+
+### TREND AND PATTERN LANGUAGE
+
+Use the pre-computed `claim_trend` field directly. Do not infer trend from 
+claim descriptions or loss types.
+- claim_trend = "stable"   → "loss activity has remained stable"
+- claim_trend = "declining" → "claim frequency is trending downward"
+- claim_trend = "increasing" → "frequency shows an upward trend"
+Never characterize trend as increasing or worsening unless the computed 
+value explicitly says so.
+
+### APPETITE-LANGUAGE CONSISTENCY
+
+Your narrative tone must match the appetite score. They cannot contradict each other.
+- Score 4-5: use confident, positive language — "well-aligned", "standard account", 
+  "proceed to pricing". Do not use "scrutiny", "warrants caution", or "concerning".
+- Score 3: use neutral language — "moderate considerations", "review recommended".
+- Score 1-2: use cautious language — "significant concerns", "requires scrutiny".
+"""
 
 
 BRIEF_USER = """## Source Documents for This Submission
