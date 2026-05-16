@@ -53,20 +53,25 @@ def audit_log(submission_id: str, stage: str, status: str, details: dict = None)
     except Exception as e:
         log.warning("audit_log_failed", stage=stage, error=str(e))
 
-        def _build_lob_display(extraction, lob: str) -> str:
-            """Build human-readable LOB string from extracted coverages."""
-            if not extraction.coverages:
-                return lob
-            seen = []
-            for c in extraction.coverages:
-                name = (c.lob or c.coverage_type or "").strip()
-                if name and name not in seen:
-                    seen.append(name)
-            if not seen:
-                return lob
-            if len(seen) == 1:
-                return seen[0]
-            return ", ".join(seen)
+def _build_lob_display(extraction, lob: str) -> str:
+    if not extraction.coverages:
+        return lob
+    seen = []
+    seen_normalized = set()
+    for c in extraction.coverages:
+        name = (c.lob or c.coverage_type or "").strip()
+        if not name:
+            continue
+        # Normalize to deduplicate "Property" vs "Commercial Property"
+        normalized = name.lower().replace("commercial ", "").replace("_", " ").strip()
+        if normalized and normalized not in seen_normalized:
+            seen_normalized.add(normalized)
+            seen.append(name)
+    if not seen:
+        return lob
+    if len(seen) == 1:
+        return seen[0]
+    return ", ".join(seen)
 
 
 class GraphState(TypedDict):

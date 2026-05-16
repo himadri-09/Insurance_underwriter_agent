@@ -531,6 +531,9 @@ Rules:
 - Show the loss ratio from the PRE-COMPUTED ANALYTICS block exactly as given — do not recalculate
 - Use the REQUESTED effective date, not the expiring policy date
 - Use risk tier language: Preferred, Standard, Substandard, Decline
+- CRITICAL: If the pre-computed analytics shows systemic=False, 
+  you MUST describe the loss pattern as "isolated" — NEVER use the word 
+  "systemic" to describe losses. The rules engine is the authoritative source.
 
 ### TREND AND PATTERN LANGUAGE
 

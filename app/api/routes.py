@@ -64,11 +64,18 @@ async def create_submission(
     if not files and not parsed_form_data:
         raise HTTPException(400, "At least one file or form data is required")
 
-    # Process files
+    # Process files — deduplicate by filename before anything else
     documents = []
     file_bytes_map = {}
+    seen_filenames: set[str] = set()
 
     for f in files:
+        # Skip duplicate filenames from the same upload batch
+        if f.filename in seen_filenames:
+            log.warning("duplicate_filename_skipped", filename=f.filename)
+            continue
+        seen_filenames.add(f.filename)
+
         ext = f.filename.rsplit(".", 1)[-1].lower() if "." in f.filename else ""
         if ext not in settings.allowed_ext_list:
             raise HTTPException(400, f"File type .{ext} not allowed. Accepted: {settings.allowed_extensions}")
@@ -95,9 +102,16 @@ async def create_submission(
             doc.storage_path = path
         except Exception as e:
             log.error("upload_failed", filename=doc.filename, error=str(e))
+            # Storage upload failed (e.g. duplicate in Supabase) but file bytes
+            # are still in memory — pipeline can proceed without storage path
 
     # Run the pipeline
-    log.info("pipeline_starting", submission_id=submission_id, user_id=user.id, file_count=len(documents), has_form_data=bool(parsed_form_data))
+    log.info("pipeline_starting",
+        submission_id=submission_id,
+        user_id=user.id,
+        file_count=len(documents),
+        has_form_data=bool(parsed_form_data),
+    )
     output = await run_pipeline(
         documents=documents,
         files=file_bytes_map,
