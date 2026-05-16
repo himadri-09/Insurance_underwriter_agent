@@ -264,41 +264,26 @@ class EvaluatorAgent:
         valid_uploaded: set,
         valid_chunks: set,
     ) -> list[SignalSource]:
-
+        """
+        Validate sources — only accept filenames we actually have.
+        Rejects invented filenames from LLM hallucination.
+        """
         valid_all = valid_uploaded | valid_chunks
-
-        # Build normalized lookup for fuzzy matching
-        def normalize(s: str) -> str:
-            return s.lower().replace("_", " ").replace("-", " ").strip()
-
-        normalized_map = {normalize(s): s for s in valid_all}
-
         validated = []
         for s in raw_sources:
             doc = s.get("doc", "")
             if not doc:
                 continue
-
-            # 1. Exact match
-            if doc in valid_all:
-                validated.append(SignalSource(
-                    doc=doc,
-                    page=s.get("page"),
-                    section=s.get("section", ""),
-                ))
-            # 2. Fuzzy match — normalize underscores/spaces/case
-            elif normalize(doc) in normalized_map:
-                real_name = normalized_map[normalize(doc)]
-                log.info("source_normalized", llm_said=doc, actual=real_name)
-                validated.append(SignalSource(
-                    doc=real_name,
-                    page=s.get("page"),
-                    section=s.get("section", ""),
-                ))
-            else:
+            if doc not in valid_all:
                 log.warning("source_invalid_rejected", doc=doc,
-                    valid_sources=list(valid_all)[:5])
-
+                    valid_uploaded=list(valid_uploaded),
+                    valid_chunks=list(valid_chunks)[:5])
+                continue
+            validated.append(SignalSource(
+                doc=doc,
+                page=s.get("page"),
+                section=s.get("section", ""),
+            ))
         return validated
 
     # ── Evaluate ─────────────────────────────────────
@@ -326,9 +311,8 @@ class EvaluatorAgent:
 
         uploaded_docs = "\n".join(f"- {doc.filename}" for doc in state.documents if doc.filename)
 
-        # Build sets of valid source names for validation
+        # Build uploaded docs set — chunk set built after tool calls complete
         valid_uploaded = {doc.filename for doc in state.documents if doc.filename}
-        valid_chunks = {c.source_doc for c in state.retrieved_chunks if c.source_doc}
 
         company_name = state.extraction.company.name or "The insured"
 
@@ -397,17 +381,12 @@ Your task:
    - Explains WHY this is a positive/negative/mitigating signal
    - CRITICAL: Use ONLY the exact numbers already in the signal detail — do NOT recalculate
 
-2. For each signal, list which source documents back the finding.
-   - sources can include BOTH uploaded document filenames AND source_doc names from Retrieved Policy Evidence
-   - ONLY use filenames from the lists above — do NOT invent filenames
-   - If a page number is unknown, use null
-
-3. broker_questions — write 3-5 questions that:
+2. broker_questions — write 3-5 questions that:
    - Reference specific facts from THIS submission (actual claim numbers, dollar amounts, property addresses, coverage gaps)
    - NEVER write vague questions like "confirm adequacy of X"
    - Each question must reference a specific finding from the extracted data
 
-4. Assign recommended_queue.
+3. Assign recommended_queue.
 
 Return ONLY this JSON — no extra text:
 {{
@@ -415,19 +394,13 @@ Return ONLY this JSON — no extra text:
   "broker_questions": ["q1", "q2", "q3"],
   "signal_narratives": {{
     "trigger_0": {{
-      "narrative": "2-3 sentence company-specific explanation with real numbers.",
-      "sources": [
-        {{"doc": "loss_runs_riverstone.pdf", "page": null, "section": ""}},
-        {{"doc": "Commercial_Lines_Appetite_Guide.pdf", "page": 12, "section": "Claims Frequency"}}
-      ]
+      "narrative": "2-3 sentence company-specific explanation with real numbers."
     }},
     "override_0": {{
-      "narrative": "2-3 sentence explanation of why this mitigates the risk.",
-      "sources": [{{"doc": "broker_submission_riverstone.pdf", "page": null, "section": ""}}]
+      "narrative": "2-3 sentence explanation of why this mitigates the risk."
     }},
     "positive_0": {{
-      "narrative": "2-3 sentence explanation of why this is a positive indicator.",
-      "sources": [{{"doc": "Commercial_Lines_Appetite_Guide.pdf", "page": 8, "section": "Eligibility"}}]
+      "narrative": "2-3 sentence explanation of why this is a positive indicator."
     }}
   }}
 }}
@@ -435,18 +408,20 @@ Return ONLY this JSON — no extra text:
 Rules:
 - Key must exactly match the rule_id: trigger_0, trigger_1, override_0, positive_0, etc.
 - narrative must be at least 2 sentences and must name {company_name}
-- sources must ONLY use filenames from the uploaded documents or retrieved evidence lists above
-- If no evidence matches a signal, sources can be empty []"""
+- Use exact numbers from the signal detail — do NOT invent or recalculate"""
 
         try:
             result, new_chunks = await self._run_with_tools(system, user_prompt, state)
             self._accumulate_chunks(state, new_chunks)
 
+            # Build valid_chunks AFTER accumulate — now includes retriever + tool chunks
+            # This is the complete set of real source_doc values from Pinecone metadata
+            valid_chunks = {c.source_doc for c in state.retrieved_chunks if c.source_doc}
+
             if isinstance(result, dict) and "parse_error" not in result:
                 state.scoring.recommended_queue = result.get("recommended_queue", "general")
                 state.scoring.broker_questions = result.get("broker_questions", [])
 
-                # ── Apply narratives and sources with validation ──────────
                 signal_narratives = result.get("signal_narratives", {})
                 narratives_applied = 0
 
@@ -454,7 +429,7 @@ Rules:
                     if r.rule_id in signal_narratives:
                         sig = signal_narratives[r.rule_id]
 
-                        # Validate narrative — reject if too short or empty
+                        # Validate narrative
                         raw_narrative = sig.get("narrative", "").strip()
                         validated_narrative = self._validate_narrative(
                             raw_narrative, company_name, r.reason
@@ -463,11 +438,17 @@ Rules:
                             r.narrative = validated_narrative
                             narratives_applied += 1
 
-                        # Validate sources — reject invented filenames
-                        raw_sources = sig.get("sources", [])
-                        r.sources = self._validate_sources(
-                            raw_sources, valid_uploaded, valid_chunks
-                        )
+                        # Sources — use actual chunk metadata directly from Pinecone
+                        # Never trust LLM-generated filenames
+                        r.sources = [
+                            SignalSource(
+                                doc=c.source_doc,
+                                page=c.page,
+                                section=c.section or "",
+                            )
+                            for c in state.retrieved_chunks
+                            if c.source_doc
+                        ][:3]
                     else:
                         log.warning("narrative_missing_for_signal", rule_id=r.rule_id)
 
