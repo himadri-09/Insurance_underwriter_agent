@@ -111,7 +111,7 @@ async def create_submission(
             data={
                 "user_id": user.id,
                 "status": output.status.value if hasattr(output.status, 'value') else output.status,
-                "lob": output.line_of_business.value if hasattr(output.line_of_business, 'value') else output.line_of_business,
+                "lob": output.line_of_business,
                 "insured_name": output.company.name,
                 "appetite_score": output.appetite_assessment.score,
                 "appetite_status": output.appetite_assessment.status.value if hasattr(output.appetite_assessment.status, 'value') else output.appetite_assessment.status,

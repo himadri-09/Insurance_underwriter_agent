@@ -53,6 +53,21 @@ def audit_log(submission_id: str, stage: str, status: str, details: dict = None)
     except Exception as e:
         log.warning("audit_log_failed", stage=stage, error=str(e))
 
+        def _build_lob_display(extraction, lob: str) -> str:
+            """Build human-readable LOB string from extracted coverages."""
+            if not extraction.coverages:
+                return lob
+            seen = []
+            for c in extraction.coverages:
+                name = (c.lob or c.coverage_type or "").strip()
+                if name and name not in seen:
+                    seen.append(name)
+            if not seen:
+                return lob
+            if len(seen) == 1:
+                return seen[0]
+            return ", ".join(seen)
+
 
 class GraphState(TypedDict):
     pipeline: PipelineState
@@ -307,7 +322,7 @@ async def run_pipeline(
     output = SubmissionOutput(
         submission_id=ps.submission_id,
         status=ps.status,
-        line_of_business=ps.lob,
+        line_of_business=_build_lob_display(ps.extraction, ps.lob),
         company=ps.extraction.company,
         extracted_facts=ps.extraction.raw_fields,
         missing_information=ps.extraction.missing_fields,
