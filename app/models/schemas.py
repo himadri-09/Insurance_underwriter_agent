@@ -230,14 +230,22 @@ class RetrievedChunk(BaseModel):
     match_type: str = ""
 
 
+class SignalSource(BaseModel):
+    doc: str = ""
+    page: Optional[int] = None
+    section: str = ""
+
 # ── Rules & Appetite ─────────────────────────────────
 
+ 
 class RuleResult(BaseModel):
     rule_id: str
     rule_name: str
     passed: bool
-    reason: str
+    reason: str                        # raw detail from rules engine (fallback)
     severity: str = "info"
+    narrative: str = ""                # NEW: LLM-written explanation with company data
+    sources: List[SignalSource] = []   # NEW: which docs back this signal
 
 
 class AppetiteAssessment(BaseModel):

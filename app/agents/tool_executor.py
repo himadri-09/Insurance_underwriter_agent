@@ -45,7 +45,7 @@ class ToolExecutor:
 
         results = await self.vector.hybrid_search(
             query=query, top_k=6, alpha=alpha,
-            filters={"doc_type": "appetite_guide"},
+            filters={"doc_type": "reference"},
         )
         return self._format_results(results, query)
 

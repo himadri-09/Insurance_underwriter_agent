@@ -11,7 +11,7 @@ import json
 import structlog
 from app.models.schemas import (
     PipelineState, AppetiteAssessment, AppetiteStatus,
-    SubmissionScoring, RuleResult, RetrievedChunk
+    SubmissionScoring, RuleResult, RetrievedChunk, SignalSource
 )
 from app.core.config import get_settings
 from app.agents.tools import REASONING_TOOLS
@@ -56,7 +56,6 @@ class EvaluatorAgent:
                     api_version=self.settings.azure_openai_api_version,
                 )
             elif self.provider == "openrouter":
-                # OpenRouter doesn't support tool calling well — fallback to non-tool
                 self._client = None
         return self._client
 
@@ -77,7 +76,6 @@ class EvaluatorAgent:
         elif self.provider == "azure":
             return await self._azure_tool_loop(system_prompt, user_prompt)
         else:
-            # Fallback: no tool calling, just reason with all evidence baked in
             return await self._fallback_no_tools(system_prompt, user_prompt)
 
     # ── Anthropic tool-calling loop ───────────────────
@@ -128,7 +126,6 @@ class EvaluatorAgent:
     async def _azure_tool_loop(
         self, system_prompt: str, user_prompt: str
     ) -> tuple[dict, list[RetrievedChunk]]:
-        # Convert our tool schemas to OpenAI function format
         openai_tools = [
             {
                 "type": "function",
@@ -160,7 +157,6 @@ class EvaluatorAgent:
             choice = response.choices[0]
 
             if choice.finish_reason == "tool_calls" and choice.message.tool_calls:
-                # Add assistant message with tool calls
                 messages.append(choice.message)
 
                 for tc in choice.message.tool_calls:
@@ -188,7 +184,6 @@ class EvaluatorAgent:
     async def _fallback_no_tools(
         self, system_prompt: str, user_prompt: str
     ) -> tuple[dict, list[RetrievedChunk]]:
-        """For providers without tool calling — just reason with what we have."""
         from app.services.llm_service import LLMService
         llm = LLMService()
         result = await llm.reason(system_prompt, user_prompt, response_format="json")
@@ -247,94 +242,143 @@ class EvaluatorAgent:
                 state.retrieved_chunks.append(chunk)
                 existing_ids.add(chunk.chunk_id)
 
-    # ── Evaluate: LLM adds narrative + broker questions to pre-computed results ──
+    # ── Evaluate ─────────────────────────────────────
 
     async def run(self, state: PipelineState) -> PipelineState:
-        """
-        The analytics_service + rules_engine already computed:
-          - appetite score, status, triggers, overrides
-          - winnability, priority
-          - referral decision
-
-        The evaluator LLM now ONLY:
-          1. Searches RAG for supporting policy language
-          2. Generates broker follow-up questions
-          3. Assigns queue
-          4. Adds narrative context to the pre-computed decision
-          5. Does NOT recalculate scores, loss ratios, or referral decisions
-        """
         state.status = "scoring"
         state.current_step = "evaluation"
 
-        # Get pre-computed results from analyze step
         analytics = state.form_data.get("_analytics", {})
         rules_result = state.form_data.get("_rules_result", {})
 
-        import json
         analytics_summary = json.dumps(rules_result.get("analytics_summary", {}), indent=2, default=str)
-        triggers_text = "\n".join(f"- {t['rule']}: {t['detail']}" for t in rules_result.get("triggers", []))
-        overrides_text = "\n".join(f"- {o['rule']}: {o['detail']}" for o in rules_result.get("overrides", []))
-        positives_text = "\n".join(f"- {p}" for p in rules_result.get("positives", []))
+        triggers_text = "\n".join(f"- [{t['rule']}] (rule_id: trigger_{i}): {t['detail']}" for i, t in enumerate(rules_result.get("triggers", [])))
+        overrides_text = "\n".join(f"- [{o['rule']}] (rule_id: override_{i}): {o['detail']}" for i, o in enumerate(rules_result.get("overrides", [])))
+        positives_text = "\n".join(f"- [{p}] (rule_id: positive_{i})" for i, p in enumerate(rules_result.get("positives", [])))
+
+        uploaded_docs = "\n".join(f"- {doc.filename}" for doc in state.documents if doc.filename)
 
         system = SCORING_SYSTEM + """
 
-IMPORTANT: The rules engine has ALREADY computed the following. Do NOT recalculate or override these:
-- Appetite score, status, winnability, priority, and referral decision are FINAL from the rules engine.
-- You must NOT change the score, winnability, priority, or referral_required values.
-- Your job is ONLY to: assign a queue, generate broker questions, and add context.
+IMPORTANT: The rules engine has ALREADY computed scores. Do NOT recalculate or override:
+- Appetite score, status, winnability, priority, referral decision are FINAL.
+- Your job is ONLY to:
+  1. Write a narrative explanation for EACH signal (trigger, override, positive)
+  2. Assign a queue
+  3. Generate broker questions
 
-You have search tools to look up policy language if needed for the broker questions."""
+You have search tools to look up policy language for the narratives and broker questions."""
 
-        user_prompt = f"""## Pre-Computed Analytics (from rules engine — DO NOT RECALCULATE)
+        user_prompt = f"""## Pre-Computed Analytics
 {analytics_summary}
 
 ## Rules Engine Decision
 Score: {rules_result.get('score', 3)}/5
 Status: {rules_result.get('status', 'review')}
-Winnability: {rules_result.get('winnability', 0.5)}
-Priority: {rules_result.get('priority', 0.5)}
 Reasoning: {rules_result.get('reasoning', '')}
 
-## Triggers Fired
+## Signals to Narrate
+### Triggers (negative)
 {triggers_text or 'None'}
 
-## Mitigating Factors / Overrides
+### Overrides (mitigating)
 {overrides_text or 'None'}
 
-## Positive Signals
+### Positives (green)
 {positives_text or 'None'}
 
-## Extracted Submission Facts
+## Extracted Company Data
 {state.extraction.model_dump_json(indent=2)}
 
-## Retrieved Evidence
+## Retrieved Policy Evidence
 {self._format_initial_evidence(state)}
 
-Based on the ABOVE pre-computed decision, provide ONLY:
-1. recommended_queue — pick from: preferred-commercial, standard-commercial, specialty-commercial, large-account, referral-senior-uw, decline-review
-2. broker_questions — 3-5 specific questions for the broker based on missing info and risk concerns
-3. coverage_recommendations — any suggested coverage modifications
+## Uploaded Source Documents
+{uploaded_docs}
 
-Return JSON:
+---
+
+Your task:
+
+1. For EACH signal listed above, write a 2-3 sentence narrative that:
+   - Names the company specifically (not "the insured" or "the company")
+   - Uses actual numbers from the extracted data (loss amounts, dates, counts, claim numbers)
+   - References the relevant policy/appetite guide language from retrieved evidence
+   - Explains WHY this is a positive/negative/mitigating signal
+
+2. For each signal, list which source documents back the finding.
+   - sources can include BOTH uploaded document filenames AND source_doc names from the Retrieved Policy Evidence chunks above
+   - If a retrieved evidence chunk directly supports the signal, cite its source_doc
+   - If a page number is unknown, use null
+
+3. broker_questions — write 3-5 questions that:
+   - Reference specific facts from THIS submission (actual claim numbers, dollar amounts, property addresses, specific coverage gaps found)
+   - NEVER write vague questions like "confirm adequacy of X" or "please provide details on Y"
+   - Instead explain the specific concern: what was found, why it matters, what you need confirmed
+   - BAD:  "Confirm umbrella limits are adequate"
+   - GOOD: "The $5M umbrella covers 148 units across 6 Chicago-area properties, only 2 of 6 are sprinklered — please confirm the underlying GL per-occurrence limit and whether the umbrella attachment point accounts for the partial sprinkler exposure at the remaining 4 locations"
+   - Each question must be answerable only by someone with direct knowledge of this specific account
+
+4. Assign recommended_queue.
+
+Return ONLY this JSON — no extra text:
 {{
-  "recommended_queue": "<queue>",
+  "recommended_queue": "<preferred-commercial|standard-commercial|specialty-commercial|large-account|referral-senior-uw|decline-review>",
   "broker_questions": ["q1", "q2", "q3"],
-  "coverage_recommendations": ["rec1", "rec2"],
-  "narrative_context": "brief explanation of the decision for the underwriter"
-}}"""
+  "signal_narratives": {{
+    "trigger_0": {{
+      "narrative": "2-3 sentence company-specific explanation with real numbers and policy context.",
+      "sources": [
+        {{"doc": "loss_runs_riverstone.pdf", "page": null, "section": ""}},
+        {{"doc": "Commercial_Lines_Appetite_Guide.pdf", "page": 12, "section": "Claims Frequency"}}
+      ]
+    }},
+    "override_0": {{
+      "narrative": "2-3 sentence explanation of why this mitigates the risk.",
+      "sources": [{{"doc": "broker_submission_riverstone.pdf", "page": null, "section": ""}}]
+    }},
+    "positive_0": {{
+      "narrative": "2-3 sentence explanation of why this is a positive indicator.",
+      "sources": [{{"doc": "Commercial_Lines_Appetite_Guide.pdf", "page": 8, "section": "Eligibility"}}]
+    }}
+  }}
+}}
+
+Rules:
+- Key must exactly match the rule_id: trigger_0, trigger_1, override_0, positive_0, etc.
+- narrative must use the company name and real numbers from extracted data
+- If no evidence matches a signal, sources can be empty []"""
 
         try:
             result, new_chunks = await self._run_with_tools(system, user_prompt, state)
             self._accumulate_chunks(state, new_chunks)
 
             if isinstance(result, dict) and "parse_error" not in result:
-                # Keep pre-computed scores from rules engine, only add LLM outputs
                 state.scoring.recommended_queue = result.get("recommended_queue", "general")
                 state.scoring.broker_questions = result.get("broker_questions", [])
+
+                signal_narratives = result.get("signal_narratives", {})
+                for r in state.appetite.rule_results:
+                    if r.rule_id in signal_narratives:
+                        sig = signal_narratives[r.rule_id]
+                        narrative = sig.get("narrative", "").strip()
+                        if narrative:
+                            r.narrative = narrative
+                        raw_sources = sig.get("sources", [])
+                        r.sources = [
+                            SignalSource(
+                                doc=s.get("doc", ""),
+                                page=s.get("page"),
+                                section=s.get("section", ""),
+                            )
+                            for s in raw_sources
+                            if s.get("doc")
+                        ]
 
                 log.info("evaluation_done",
                     queue=state.scoring.recommended_queue,
                     broker_questions=len(state.scoring.broker_questions),
+                    narratives_written=len(signal_narratives),
                 )
             else:
                 state.scoring.recommended_queue = "referral-senior-uw" if state.scoring.referral_required else "standard-commercial"
