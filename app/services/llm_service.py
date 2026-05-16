@@ -45,7 +45,6 @@ class LLMService:
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30))
     async def extract_from_pdf(self, pdf_base64: str, prompt: str) -> dict:
         """Send full PDF to reasoning model in one call."""
-
         if self.settings.reasoning_provider == "anthropic":
             response = self.anthropic.messages.create(
                 model=self.settings.reasoning_model,
@@ -64,7 +63,7 @@ class LLMService:
                         {"type": "text", "text": prompt},
                     ],
                 }],
-                temperature=0.1,
+                temperature=0,  # extraction must be deterministic
             )
             content = response.content[0].text
         else:
@@ -88,7 +87,7 @@ class LLMService:
             response = self.azure.chat.completions.create(
                 model=self.settings.reasoning_model,
                 messages=[{"role": "user", "content": content_parts}],
-                temperature=0.1,
+                temperature=0,  # extraction must be deterministic
                 max_tokens=4096,
                 response_format={"type": "json_object"},
             )
@@ -119,7 +118,7 @@ class LLMService:
                             {"type": "text", "text": prompt},
                         ],
                     }],
-                    "temperature": 0.1,
+                    "temperature": 0,  # extraction must be deterministic
                     "max_tokens": 4096,
                     "response_format": {"type": "json_object"},
                 },
@@ -147,7 +146,7 @@ class LLMService:
                 "model": self.settings.reasoning_model,
                 "max_tokens": 4096,
                 "messages": [{"role": "user", "content": user_prompt}],
-                "temperature": 0.2,
+                "temperature": 0,  # reasoning must be deterministic
             }
             if system_prompt:
                 kwargs["system"] = system_prompt
@@ -162,7 +161,7 @@ class LLMService:
             kwargs = {
                 "model": self.settings.reasoning_model,
                 "messages": messages,
-                "temperature": 0.2,
+                "temperature": 0,  # reasoning must be deterministic
                 "max_tokens": 4096,
             }
             if response_format == "json":
@@ -187,7 +186,7 @@ class LLMService:
                 max_tokens=4096,
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
-                temperature=0.3,
+                temperature=0,  # brief must be deterministic — no random variation
             )
             return response.content[0].text
         else:
@@ -197,7 +196,7 @@ class LLMService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.3,
+                temperature=0,  # brief must be deterministic — no random variation
                 max_tokens=4096,
             )
             return response.choices[0].message.content or ""

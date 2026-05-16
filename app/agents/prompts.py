@@ -528,22 +528,31 @@ Rules:
 - If loss data EXISTS in the extraction, do NOT say "loss runs not provided"
 - If property details are incomplete, state "PROPERTY DETAILS INCOMPLETE"
 - If revenue/payroll missing, flag it explicitly
-- Show the loss ratio from the PRE-COMPUTED ANALYTICS block exactly as given — do not recalculate
-- Use the REQUESTED effective date, not the expiring policy date
+- Show the loss ratio from the GROUNDED FACTS block exactly as given — do not recalculate
+- Use the REQUESTED effective date from the broker submission, not the expiring policy date
 - Use risk tier language: Preferred, Standard, Substandard, Decline
-- CRITICAL: If the pre-computed analytics shows systemic=False, 
-  you MUST describe the loss pattern as "isolated" — NEVER use the word 
-  "systemic" to describe losses. The rules engine is the authoritative source.
+- Use the GROUNDED FACTS block at the top for ALL numbers — it is the authoritative source
+- CRITICAL CAUSATION RULE: If the GROUNDED FACTS block says "ISOLATED", you MUST describe 
+  the loss pattern as "isolated" or "varied operational exposure" or "mixed claim types".
+  NEVER use the word "systemic" when causation is ISOLATED. The rules engine is authoritative.
+- CRITICAL CARRIER RULE: Use ONLY the carrier names from GROUNDED FACTS.
+  Do NOT invent carrier names or confuse non-renewal carriers with current carriers.
+- CRITICAL LARGEST CLAIM: The largest single claim is stated in GROUNDED FACTS.
+  Do NOT identify a different claim as the largest.
 
 ### TREND AND PATTERN LANGUAGE
-
-Use the pre-computed `claim_trend` field directly. Do not infer trend from 
-claim descriptions or loss types.
-- claim_trend = "stable"   → "loss activity has remained stable"
-- claim_trend = "declining" → "claim frequency is trending downward"
-- claim_trend = "increasing" → "frequency shows an upward trend"
-Never characterize trend as increasing or worsening unless the computed 
-value explicitly says so.
+ 
+Use the Claim Trend value from the GROUNDED FACTS / PRE-COMPUTED ANALYTICS block directly.
+Map it to exact language:
+- "stable" → "loss activity has remained stable"
+- "declining" → "claim frequency is trending downward"  
+- "increasing" → "frequency is moderately elevated — above appetite threshold"
+  NOTE: Do NOT say "increasing trend" — say "moderately elevated frequency"
+- "stable_frequency_severity_spike" → "frequency is stable with one severity outlier"
+- "no_claims" → "no claims in the policy period"
+ 
+NEVER characterize trend as "increasing" in the Key Concerns section — 
+use "frequency-driven operational exposure" or "claim frequency above appetite threshold" instead.
 
 ### APPETITE-LANGUAGE CONSISTENCY
 

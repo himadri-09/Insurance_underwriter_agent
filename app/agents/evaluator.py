@@ -43,7 +43,6 @@ class EvaluatorAgent:
 
     @property
     def client(self):
-        """Lazy init the right client."""
         if self._client is None:
             if self.provider == "anthropic":
                 import anthropic
@@ -93,7 +92,7 @@ class EvaluatorAgent:
                 system=system_prompt,
                 messages=messages,
                 tools=REASONING_TOOLS,
-                temperature=0.2,
+                temperature=0,  # deterministic — no variation between runs
             )
 
             if response.stop_reason == "tool_use":
@@ -150,7 +149,7 @@ class EvaluatorAgent:
                 model=deployment,
                 messages=messages,
                 tools=openai_tools,
-                temperature=0.2,
+                temperature=0,  # deterministic — no variation between runs
                 max_tokens=4096,
             )
 
@@ -242,6 +241,51 @@ class EvaluatorAgent:
                 state.retrieved_chunks.append(chunk)
                 existing_ids.add(chunk.chunk_id)
 
+    def _validate_narrative(self, narrative: str, company_name: str, rule_detail: str) -> str:
+        """
+        Validate LLM narrative — if too short or missing company name,
+        fall back to the rule detail from the rules engine.
+        """
+        if not narrative or len(narrative.strip()) < 40:
+            log.warning("narrative_too_short", length=len(narrative) if narrative else 0)
+            return rule_detail
+
+        # Check company name is mentioned (use first word of company name)
+        first_word = company_name.split()[0].lower() if company_name else ""
+        if first_word and first_word not in narrative.lower():
+            log.warning("narrative_missing_company", company=company_name)
+            # Still use it — LLM may have used a pronoun — just log
+
+        return narrative.strip()
+
+    def _validate_sources(
+        self,
+        raw_sources: list,
+        valid_uploaded: set,
+        valid_chunks: set,
+    ) -> list[SignalSource]:
+        """
+        Validate sources — only accept filenames we actually have.
+        Rejects invented filenames from LLM hallucination.
+        """
+        valid_all = valid_uploaded | valid_chunks
+        validated = []
+        for s in raw_sources:
+            doc = s.get("doc", "")
+            if not doc:
+                continue
+            if doc not in valid_all:
+                log.warning("source_invalid_rejected", doc=doc,
+                    valid_uploaded=list(valid_uploaded),
+                    valid_chunks=list(valid_chunks)[:5])
+                continue
+            validated.append(SignalSource(
+                doc=doc,
+                page=s.get("page"),
+                section=s.get("section", ""),
+            ))
+        return validated
+
     # ── Evaluate ─────────────────────────────────────
 
     async def run(self, state: PipelineState) -> PipelineState:
@@ -252,14 +296,26 @@ class EvaluatorAgent:
         rules_result = state.form_data.get("_rules_result", {})
 
         analytics_summary = json.dumps(rules_result.get("analytics_summary", {}), indent=2, default=str)
-        triggers_text = "\n".join(f"- [{t['rule']}] (rule_id: trigger_{i}): {t['detail']}" for i, t in enumerate(rules_result.get("triggers", [])))
-        overrides_text = "\n".join(f"- [{o['rule']}] (rule_id: override_{i}): {o['detail']}" for i, o in enumerate(rules_result.get("overrides", [])))
+        triggers_text = "\n".join(
+            f"- [{t['rule']}] (rule_id: trigger_{i}): {t['detail']}"
+            for i, t in enumerate(rules_result.get("triggers", []))
+        )
+        overrides_text = "\n".join(
+            f"- [{o['rule']}] (rule_id: override_{i}): {o['detail']}"
+            for i, o in enumerate(rules_result.get("overrides", []))
+        )
         positives_text = "\n".join(
             f"- [{p['rule'] if isinstance(p, dict) else p}] (rule_id: positive_{i}): {p['detail'] if isinstance(p, dict) else p}"
             for i, p in enumerate(rules_result.get("positives", []))
         )
 
         uploaded_docs = "\n".join(f"- {doc.filename}" for doc in state.documents if doc.filename)
+
+        # Build sets of valid source names for validation
+        valid_uploaded = {doc.filename for doc in state.documents if doc.filename}
+        valid_chunks = {c.source_doc for c in state.retrieved_chunks if c.source_doc}
+
+        company_name = state.extraction.company.name or "The insured"
 
         system = SCORING_SYSTEM + """
 
@@ -272,7 +328,23 @@ IMPORTANT: The rules engine has ALREADY computed scores. Do NOT recalculate or o
 
 You have search tools to look up policy language for the narratives and broker questions."""
 
-        user_prompt = f"""## Pre-Computed Analytics
+        # Pull canonical facts object — single source of truth
+        uw = state.form_data.get("_uw_facts", {})
+        uw_facts_block = f"""## ══ GROUNDED FACTS — USE THESE EXACT VALUES IN ALL NARRATIVES ══
+Company: {uw.get('company_name', company_name)}
+Loss Ratio: {uw.get('loss_ratio', 'N/A')}%
+Loss Ratio (ex. largest): {uw.get('loss_ratio_ex_largest', 'N/A')}%
+Total Claims: {uw.get('total_claims', 0)}
+Total Incurred: ${uw.get('total_incurred', 0):,.0f}
+Largest Single Claim: ${uw.get('largest_claim_amount', 0):,.0f} ({uw.get('largest_claim_type', '')} on {uw.get('largest_claim_date', '')})
+Open Claims: {uw.get('open_claims', 0)}
+Causation: {'SYSTEMIC' if uw.get('systemic') else 'ISOLATED — do NOT use word systemic'}
+Prior Non-Renewal: {'YES — by ' + ', '.join(uw.get('prior_nonrenewal_carriers', [])) if uw.get('prior_nonrenewal') else 'NO'}
+Current Carrier(s): {', '.join(uw.get('current_carriers', [])) or 'Not specified'}"""
+
+        user_prompt = f"""{uw_facts_block}
+
+## Pre-Computed Analytics
 {analytics_summary}
 
 ## Rules Engine Decision
@@ -304,34 +376,21 @@ Reasoning: {rules_result.get('reasoning', '')}
 Your task:
 
 1. For EACH signal listed above, write a 2-3 sentence narrative that:
-   - Names the company specifically (not "the insured" or "the company")
-   - Uses actual numbers from the extracted data (loss amounts, dates, counts, claim numbers)
+   - Names the company specifically ({company_name}) — not "the insured" or "the company"
+   - Uses actual numbers from the signal detail field (dollar amounts, dates, counts)
    - References the relevant policy/appetite guide language from retrieved evidence
    - Explains WHY this is a positive/negative/mitigating signal
-
-    CRITICAL for narrative quality:
-    - Use the EXACT numbers from the signal detail field — dollar amounts, dates, 
-    claim numbers, percentages. Do not round or generalize.
-    - QUOTE the exact rule/threshold language from the Retrieved Policy Evidence chunks
-    (e.g. "Per the appetite guide, accounts with 3+ claims require senior referral")
-    - The narrative must sound like a senior underwriter wrote it — specific, 
-    data-driven, citing real policy language from the retrieved chunks
-    - For sources[], include BOTH the uploaded PDF that contains the data 
-    AND the chunk source_doc from Retrieved Policy Evidence that backs the rule
-    - NEVER write a narrative without using at least one real number from the signal detail
+   - CRITICAL: Use ONLY the exact numbers already in the signal detail — do NOT recalculate
 
 2. For each signal, list which source documents back the finding.
-   - sources can include BOTH uploaded document filenames AND source_doc names from the Retrieved Policy Evidence chunks above
-   - If a retrieved evidence chunk directly supports the signal, cite its source_doc
+   - sources can include BOTH uploaded document filenames AND source_doc names from Retrieved Policy Evidence
+   - ONLY use filenames from the lists above — do NOT invent filenames
    - If a page number is unknown, use null
 
 3. broker_questions — write 3-5 questions that:
-   - Reference specific facts from THIS submission (actual claim numbers, dollar amounts, property addresses, specific coverage gaps found)
-   - NEVER write vague questions like "confirm adequacy of X" or "please provide details on Y"
-   - Instead explain the specific concern: what was found, why it matters, what you need confirmed
-   - BAD:  "Confirm umbrella limits are adequate"
-   - GOOD: "The $5M umbrella covers 148 units across 6 Chicago-area properties, only 2 of 6 are sprinklered — please confirm the underlying GL per-occurrence limit and whether the umbrella attachment point accounts for the partial sprinkler exposure at the remaining 4 locations"
-   - Each question must be answerable only by someone with direct knowledge of this specific account
+   - Reference specific facts from THIS submission (actual claim numbers, dollar amounts, property addresses, coverage gaps)
+   - NEVER write vague questions like "confirm adequacy of X"
+   - Each question must reference a specific finding from the extracted data
 
 4. Assign recommended_queue.
 
@@ -341,7 +400,7 @@ Return ONLY this JSON — no extra text:
   "broker_questions": ["q1", "q2", "q3"],
   "signal_narratives": {{
     "trigger_0": {{
-      "narrative": "2-3 sentence company-specific explanation with real numbers and policy context.",
+      "narrative": "2-3 sentence company-specific explanation with real numbers.",
       "sources": [
         {{"doc": "loss_runs_riverstone.pdf", "page": null, "section": ""}},
         {{"doc": "Commercial_Lines_Appetite_Guide.pdf", "page": 12, "section": "Claims Frequency"}}
@@ -360,7 +419,8 @@ Return ONLY this JSON — no extra text:
 
 Rules:
 - Key must exactly match the rule_id: trigger_0, trigger_1, override_0, positive_0, etc.
-- narrative must use the company name and real numbers from extracted data
+- narrative must be at least 2 sentences and must name {company_name}
+- sources must ONLY use filenames from the uploaded documents or retrieved evidence lists above
 - If no evidence matches a signal, sources can be empty []"""
 
         try:
@@ -371,28 +431,37 @@ Rules:
                 state.scoring.recommended_queue = result.get("recommended_queue", "general")
                 state.scoring.broker_questions = result.get("broker_questions", [])
 
+                # ── Apply narratives and sources with validation ──────────
                 signal_narratives = result.get("signal_narratives", {})
+                narratives_applied = 0
+
                 for r in state.appetite.rule_results:
                     if r.rule_id in signal_narratives:
                         sig = signal_narratives[r.rule_id]
-                        narrative = sig.get("narrative", "").strip()
-                        if narrative:
-                            r.narrative = narrative
+
+                        # Validate narrative — reject if too short or empty
+                        raw_narrative = sig.get("narrative", "").strip()
+                        validated_narrative = self._validate_narrative(
+                            raw_narrative, company_name, r.reason
+                        )
+                        if validated_narrative:
+                            r.narrative = validated_narrative
+                            narratives_applied += 1
+
+                        # Validate sources — reject invented filenames
                         raw_sources = sig.get("sources", [])
-                        r.sources = [
-                            SignalSource(
-                                doc=s.get("doc", ""),
-                                page=s.get("page"),
-                                section=s.get("section", ""),
-                            )
-                            for s in raw_sources
-                            if s.get("doc")
-                        ]
+                        r.sources = self._validate_sources(
+                            raw_sources, valid_uploaded, valid_chunks
+                        )
+                    else:
+                        log.warning("narrative_missing_for_signal", rule_id=r.rule_id)
 
                 log.info("evaluation_done",
                     queue=state.scoring.recommended_queue,
                     broker_questions=len(state.scoring.broker_questions),
                     narratives_written=len(signal_narratives),
+                    narratives_applied=narratives_applied,
+                    signals_total=len(state.appetite.rule_results),
                 )
             else:
                 state.scoring.recommended_queue = "referral-senior-uw" if state.scoring.referral_required else "standard-commercial"

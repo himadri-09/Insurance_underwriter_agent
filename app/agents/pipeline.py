@@ -73,6 +73,71 @@ def _build_lob_display(extraction, lob: str) -> str:
         return seen[0]
     return ", ".join(seen)
 
+def _build_uw_facts(analytics: dict, rules_result: dict, extraction) -> dict:
+    """
+    Build a single canonical underwriting facts object from deterministic analytics.
+    This is the SINGLE SOURCE OF TRUTH for all LLM sections:
+    - evaluator narratives
+    - brief writer
+    - referral note
+    All sections consume ONLY this object — no independent recalculation allowed.
+    """
+    loss = analytics.get("loss", {})
+    carrier = analytics.get("carrier", {})
+    causation = analytics.get("causation", {})
+ 
+    # Largest event
+    largest_event = loss.get("largest_event") or {}
+    largest_amount = largest_event.get("total_incurred", 0)
+    largest_type = largest_event.get("type", "unknown type")
+    largest_date = largest_event.get("date_normalized", "")
+ 
+    # Prior non-renewal — carriers that actually non-renewed
+    non_renewal_carriers = carrier.get("non_renewal_carriers", [])
+ 
+    # Current carriers — ones that are NOT non-renewed
+    current_carriers = []
+    for pi in (extraction.prior_insurance or []):
+        if pi.carrier and not pi.cancelled_by_carrier:
+            name = pi.carrier.strip()
+            if name and "none" not in name.lower():
+                current_carriers.append(name)
+ 
+    return {
+        # Company
+        "company_name": extraction.company.name or "The insured",
+ 
+        # Loss metrics — from deterministic analytics ONLY
+        "loss_ratio": loss.get("loss_ratio_pct"),
+        "loss_ratio_ex_largest": loss.get("loss_ratio_ex_largest_pct"),
+        "total_claims": loss.get("total_events", 0),
+        "total_incurred": loss.get("total_incurred", 0),
+        "total_premium": loss.get("total_premium", 0),
+        "open_claims": loss.get("open_events_count", 0),
+        "open_reserves": loss.get("open_reserves", 0),
+        "claim_trend": loss.get("claim_trend", "stable"),
+        "clean_years": loss.get("clean_years", 0),
+ 
+        # Largest claim — authoritative
+        "largest_claim_amount": largest_amount,
+        "largest_claim_type": largest_type,
+        "largest_claim_date": largest_date,
+ 
+        # Causation — from analytics, never LLM
+        "systemic": causation.get("systemic", False),
+        "causation_types": causation.get("unique_types", []),
+ 
+        # Carrier history — authoritative
+        "prior_nonrenewal": carrier.get("non_renewal", False),
+        "prior_nonrenewal_carriers": non_renewal_carriers,
+        "current_carriers": list(set(current_carriers)),
+ 
+        # Rules engine decision
+        "appetite_score": rules_result.get("score", 3),
+        "appetite_status": rules_result.get("status", "review"),
+        "reasoning": rules_result.get("reasoning", ""),
+    }
+ 
 
 class GraphState(TypedDict):
     pipeline: PipelineState
@@ -181,6 +246,19 @@ async def analyze_node(state: GraphState) -> GraphState:
                 t["rule"] for t in rules_result["triggers"]
                 if t["severity"] in ("refer", "decline")
             ],
+        )
+
+        # ── Build canonical underwriting facts — single source of truth ──
+        uw_facts = _build_uw_facts(analytics, rules_result, ps.extraction)
+        ps.form_data["_uw_facts"] = uw_facts
+
+        log.info("uw_facts_built",
+            company=uw_facts["company_name"],
+            loss_ratio=uw_facts["loss_ratio"],
+            total_claims=uw_facts["total_claims"],
+            largest_claim=uw_facts["largest_claim_amount"],
+            prior_nonrenewal=uw_facts["prior_nonrenewal"],
+            systemic=uw_facts["systemic"],
         )
 
         log.info("analyze_done",
