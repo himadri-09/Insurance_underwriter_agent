@@ -254,7 +254,10 @@ class EvaluatorAgent:
         analytics_summary = json.dumps(rules_result.get("analytics_summary", {}), indent=2, default=str)
         triggers_text = "\n".join(f"- [{t['rule']}] (rule_id: trigger_{i}): {t['detail']}" for i, t in enumerate(rules_result.get("triggers", [])))
         overrides_text = "\n".join(f"- [{o['rule']}] (rule_id: override_{i}): {o['detail']}" for i, o in enumerate(rules_result.get("overrides", [])))
-        positives_text = "\n".join(f"- [{p}] (rule_id: positive_{i})" for i, p in enumerate(rules_result.get("positives", [])))
+        positives_text = "\n".join(
+            f"- [{p['rule'] if isinstance(p, dict) else p}] (rule_id: positive_{i}): {p['detail'] if isinstance(p, dict) else p}"
+            for i, p in enumerate(rules_result.get("positives", []))
+        )
 
         uploaded_docs = "\n".join(f"- {doc.filename}" for doc in state.documents if doc.filename)
 
@@ -305,6 +308,17 @@ Your task:
    - Uses actual numbers from the extracted data (loss amounts, dates, counts, claim numbers)
    - References the relevant policy/appetite guide language from retrieved evidence
    - Explains WHY this is a positive/negative/mitigating signal
+
+    CRITICAL for narrative quality:
+    - Use the EXACT numbers from the signal detail field — dollar amounts, dates, 
+    claim numbers, percentages. Do not round or generalize.
+    - QUOTE the exact rule/threshold language from the Retrieved Policy Evidence chunks
+    (e.g. "Per the appetite guide, accounts with 3+ claims require senior referral")
+    - The narrative must sound like a senior underwriter wrote it — specific, 
+    data-driven, citing real policy language from the retrieved chunks
+    - For sources[], include BOTH the uploaded PDF that contains the data 
+    AND the chunk source_doc from Retrieved Policy Evidence that backs the rule
+    - NEVER write a narrative without using at least one real number from the signal detail
 
 2. For each signal, list which source documents back the finding.
    - sources can include BOTH uploaded document filenames AND source_doc names from the Retrieved Policy Evidence chunks above

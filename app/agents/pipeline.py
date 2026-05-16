@@ -133,11 +133,14 @@ async def analyze_node(state: GraphState) -> GraphState:
 
         # 3. Positives — green signals (were dropped as plain strings before)
         for i, p in enumerate(rules_result.get("positives", [])):
+            # positives are now dicts with rule + detail (rules_engine v3)
+            rule_name = p["rule"] if isinstance(p, dict) else p
+            rule_detail = p["detail"] if isinstance(p, dict) else p
             all_rule_results.append(RuleResult(
                 rule_id=f"positive_{i}",
-                rule_name=p,
+                rule_name=rule_name,
                 passed=True,
-                reason=p,
+                reason=rule_detail,
                 severity="positive",
             ))
 

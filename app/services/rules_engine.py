@@ -32,15 +32,47 @@ def _deep_scan_info_completeness(extraction: ExtractionResult) -> dict:
     }
 
 
+def _format_loss_history(extraction: ExtractionResult) -> str:
+    """Format loss history into a rich human-readable string for evaluator narratives."""
+    if not extraction.loss_history:
+        return "No claims on record."
+    lines = []
+    for loss in extraction.loss_history:
+        amount = f"${loss.incurred:,.0f}" if loss.incurred else (f"${loss.amount_paid:,.0f}" if loss.amount_paid else "amount unknown")
+        date = loss.date_of_loss or "unknown date"
+        claim_type = loss.type or "unknown type"
+        desc = loss.description or ""
+        status = loss.status or "unknown"
+        line = f"  - {date}: {claim_type} — {amount} incurred ({status})"
+        if desc:
+            line += f". {desc[:120]}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def _format_coverages(extraction: ExtractionResult) -> str:
+    """Format requested coverages into a readable list."""
+    if not extraction.coverages:
+        return "No coverages specified."
+    seen = set()
+    lobs = []
+    for c in extraction.coverages:
+        lob = c.lob or c.coverage_type or ""
+        if lob and lob not in seen:
+            seen.add(lob)
+            lobs.append(lob)
+    return ", ".join(lobs) if lobs else "Not specified"
+
+
 def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     """
     Apply underwriting rules to pre-computed analytics.
     Returns triggers, overrides, positives, and final recommendation.
     """
-    triggers  = []   # negative signals (fired rules)
-    positives = []   # positive signals
-    overrides = []   # mitigating factors
-    missing   = []   # critical missing info
+    triggers  = []
+    positives = []
+    overrides = []
+    missing   = []
 
     loss       = analytics.get("loss", {})
     biz        = analytics.get("business", {})
@@ -51,20 +83,26 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     suppression = analytics.get("suppression", {})
     causation   = analytics.get("causation", {})
 
-    loss_ratio       = loss.get("loss_ratio_pct")
+    loss_ratio        = loss.get("loss_ratio_pct")
     loss_ratio_ex_cat = loss.get("loss_ratio_ex_largest_pct")
-    total_incurred   = loss.get("total_incurred", 0)
+    total_incurred    = loss.get("total_incurred", 0)
+    total_premium     = loss.get("total_premium", 0)
     incurred_ex_largest = loss.get("incurred_ex_largest", 0)
-    total_events     = loss.get("total_events", 0)
-    open_events      = loss.get("open_events_count", 0)
-    open_reserves    = loss.get("open_reserves", 0)
-    claim_trend      = loss.get("claim_trend", "")
-    clean_years      = loss.get("clean_years", 0)
-    shock_loss       = loss.get("shock_loss_present", False)
-    largest_event    = loss.get("largest_event") or {}
+    total_events      = loss.get("total_events", 0)
+    open_events       = loss.get("open_events_count", 0)
+    open_reserves     = loss.get("open_reserves", 0)
+    claim_trend       = loss.get("claim_trend", "")
+    clean_years       = loss.get("clean_years", 0)
+    shock_loss        = loss.get("shock_loss_present", False)
+    largest_event     = loss.get("largest_event") or {}
 
-    revenue   = biz.get("revenue", 0)
-    years     = biz.get("years_in_business", 0)
+    revenue = biz.get("revenue", 0)
+    years   = biz.get("years_in_business", 0)
+
+    company_name  = extraction.company.name or "The insured"
+    loss_history_detail = _format_loss_history(extraction)
+    coverages_detail    = _format_coverages(extraction)
+    notes_lower = (extraction.broker_notes or "").lower()
 
     # ══════════════════════════════════════════════════
     # DECLINE TRIGGERS
@@ -77,7 +115,10 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
             "detail": (
                 f"Loss ratio: {loss_ratio:.1f}% "
                 f"(total incurred ${total_incurred:,.0f} / "
-                f"total premium ${loss.get('total_premium', 0):,.0f})"
+                f"total premium ${total_premium:,.0f}). "
+                f"This significantly exceeds the maximum acceptable threshold of 200% "
+                f"for standard commercial lines. "
+                f"Loss history:\n{loss_history_detail}"
             ),
         })
 
@@ -85,7 +126,11 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         triggers.append({
             "rule": "DECLINE: 5+ claims with 2+ still open",
             "severity": "decline",
-            "detail": f"{total_events} loss events, {open_events} open",
+            "detail": (
+                f"{total_events} loss events with {open_events} still open. "
+                f"Open reserves: ${open_reserves:,.0f}. "
+                f"Loss history:\n{loss_history_detail}"
+            ),
         })
 
     if carrier.get("non_renewal_count", 0) >= 2:
@@ -99,7 +144,7 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         triggers.append({
             "rule": "DECLINE: Business less than 1 year old",
             "severity": "decline",
-            "detail": f"Years in business: {years}",
+            "detail": f"{company_name} has been in operation for less than 1 year — insufficient track record for standard commercial underwriting.",
         })
 
     # ══════════════════════════════════════════════════
@@ -110,56 +155,71 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         triggers.append({
             "rule": "REFER: Loss ratio between 50-200%",
             "severity": "refer",
-            "detail": f"Loss ratio: {loss_ratio:.1f}%",
+            "detail": (
+                f"Loss ratio: {loss_ratio:.1f}% "
+                f"(total incurred ${total_incurred:,.0f} / total premium ${total_premium:,.0f}). "
+                f"Exceeds the 50% standard threshold, requiring senior underwriter review. "
+                f"Loss history:\n{loss_history_detail}"
+            ),
         })
 
     if carrier.get("non_renewal"):
         triggers.append({
             "rule": "REFER: Prior carrier non-renewal",
             "severity": "refer",
-            "detail": f"Non-renewed by: {', '.join(carrier.get('non_renewal_carriers', [])) or 'carrier (from broker notes)'}",
+            "detail": (
+                f"Non-renewed by: {', '.join(carrier.get('non_renewal_carriers', [])) or 'prior carrier (from broker notes)'}. "
+                f"Carrier non-renewal signals elevated risk perception. Senior underwriter must review reason for non-renewal."
+            ),
         })
 
     if open_reserves > 100_000:
         triggers.append({
             "rule": "REFER: Open claim reserves exceed $100K",
             "severity": "refer",
-            "detail": f"Open reserves: ${open_reserves:,.0f}",
+            "detail": f"Open reserves: ${open_reserves:,.0f} across {open_events} open claim(s). Elevated open exposure requires senior review before binding.",
         })
 
     if total_events >= 3:
         triggers.append({
             "rule": "REFER: 3+ claims in history",
             "severity": "refer",
-            "detail": f"{total_events} loss events",
+            "detail": (
+                f"{company_name} has {total_events} loss events totalling ${total_incurred:,.0f} "
+                f"over the policy period (loss ratio: {loss_ratio:.1f}% overall, "
+                f"{loss_ratio_ex_cat:.1f}% excluding largest claim). "
+                f"Claim frequency exceeds the 3-claim referral threshold for commercial property risks. "
+                f"Full loss history:\n{loss_history_detail}"
+            ),
         })
 
     if revenue > 50_000_000:
         triggers.append({
             "rule": "REFER: Revenue exceeds $50M (large account)",
             "severity": "refer",
-            "detail": f"Revenue: ${revenue:,.0f}",
+            "detail": f"{company_name} annual revenue: ${revenue:,.0f} — exceeds $50M large account threshold requiring senior underwriter assignment.",
         })
 
     if cov.get("max_single_limit", 0) > 5_000_000:
         triggers.append({
             "rule": "REFER: Requested limit exceeds $5M",
             "severity": "refer",
-            "detail": f"Max limit requested: ${cov['max_single_limit']:,.0f}",
+            "detail": f"Max limit requested: ${cov['max_single_limit']:,.0f} — exceeds $5M single-limit referral threshold.",
         })
 
     if years < 2:
         triggers.append({
             "rule": "REFER: Business less than 2 years old",
             "severity": "refer",
-            "detail": f"Years in business: {years}",
+            "detail": f"{company_name} has been in business for {years} year(s) — below the 2-year minimum for standard commercial approval.",
         })
 
     if prop.get("oldest_building_year") and (2026 - prop["oldest_building_year"]) > 40:
+        age = 2026 - prop["oldest_building_year"]
         triggers.append({
             "rule": "REFER: Property older than 40 years",
             "severity": "refer",
-            "detail": f"Oldest building: {prop['oldest_building_year']}",
+            "detail": f"Oldest building: {prop['oldest_building_year']} ({age} years old). Properties over 40 years require senior review for structural condition and update status.",
         })
 
     # ══════════════════════════════════════════════════
@@ -167,57 +227,129 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     # ══════════════════════════════════════════════════
 
     if loss_ratio_ex_cat is not None and loss_ratio_ex_cat < 30:
+        largest_type = largest_event.get("type", "largest claim") if largest_event else "largest claim"
+        largest_amt  = largest_event.get("total_incurred", 0) if largest_event else 0
+        largest_date = largest_event.get("date_normalized", "") if largest_event else ""
         overrides.append({
             "rule": "OVERRIDE: Excluding largest loss, ratio is excellent",
-            "detail": f"Loss ratio excluding largest claim: {loss_ratio_ex_cat:.1f}% (incurred ${incurred_ex_largest:,.0f})",
+            "detail": (
+                f"Excluding the largest claim ({largest_type}, ${largest_amt:,.0f}"
+                f"{f', {largest_date}' if largest_date else ''}), "
+                f"{company_name} has an excellent adjusted loss ratio of {loss_ratio_ex_cat:.1f}% "
+                f"(remaining incurred: ${incurred_ex_largest:,.0f} / total premium: ${total_premium:,.0f}). "
+                f"This demonstrates that underlying loss activity is well-controlled — the elevated overall "
+                f"ratio is driven by a single isolated event rather than recurring patterns."
+            ),
         })
 
     if subrogation.get("potential"):
         overrides.append({
             "rule": "OVERRIDE: Subrogation recovery potential",
-            "detail": f"May reduce net incurred. Details: {subrogation.get('details', '')[:200]}",
+            "detail": f"Subrogation potential identified — may reduce net incurred exposure. Details: {subrogation.get('details', '')[:200]}",
         })
 
     if suppression.get("effective"):
         overrides.append({
             "rule": "OVERRIDE: Fire suppression system worked as designed",
-            "detail": "Prevented total loss. Controls functioned correctly.",
+            "detail": f"Fire suppression system activated and contained the loss as intended — prevented total loss scenario. {suppression.get('details', '')[:200]}",
         })
 
     if not causation.get("systemic") and total_events >= 1:
+        # Build human-readable cause list from actual loss history
+        cause_descriptions = []
+        for loss_item in extraction.loss_history:
+            if loss_item.type:
+                amt = f"${loss_item.incurred:,.0f}" if loss_item.incurred else ""
+                date = loss_item.date_of_loss or ""
+                entry = f"{loss_item.type} ({date}, {amt})" if amt else f"{loss_item.type} ({date})"
+                cause_descriptions.append(entry)
+
+        cause_text = "; ".join(cause_descriptions) if cause_descriptions else ", ".join(causation.get("unique_types", []))
+
         overrides.append({
             "rule": "OVERRIDE: Loss causes are isolated (not systemic pattern)",
-            "detail": f"Causation types: {', '.join(causation.get('unique_types', []))}. No repeated patterns.",
+            "detail": (
+                f"{company_name} has {total_events} claims with entirely different causation types — "
+                f"no single cause repeats across the policy period: {cause_text}. "
+                f"The absence of systemic patterns (e.g. repeated water damage, recurring fire risk) "
+                f"indicates these losses are random, unrelated events rather than an underlying operational deficiency. "
+                f"This significantly mitigates forward-looking frequency risk."
+            ),
         })
 
     if clean_years >= 3:
         overrides.append({
             "rule": "OVERRIDE: Multiple clean years in history",
-            "detail": f"{clean_years} years with no claims — demonstrates operational control.",
+            "detail": f"{clean_years} calendar years within the policy period had zero claims — demonstrates operational control and risk management discipline.",
         })
 
     # ══════════════════════════════════════════════════
-    # POSITIVES
+    # POSITIVES — now with actual data in the detail
     # ══════════════════════════════════════════════════
 
     if years >= 3:
-        positives.append(f"Established business: {years} years in operation")
-    if cov.get("multi_line"):
-        positives.append(f"Multi-line opportunity: {cov.get('line_count', 0)} lines requested")
-    if prop.get("sprinklered_count", 0) == prop.get("location_count", 1) and prop.get("location_count", 0) > 0:
-        positives.append("All locations fully sprinklered")
-    if claim_trend == "declining":
-        positives.append("Claim frequency is declining trend")
-    if clean_years >= 5:
-        positives.append(f"Strong clean history: {clean_years} years without claims")
+        revenue_str = f", ${revenue:,.0f} annual revenue" if revenue else ""
+        industry = extraction.company.industry or extraction.company.description or ""
+        positives.append({
+            "rule": f"Established business: {years} years in operation",
+            "detail": (
+                f"{company_name} has been in continuous operation for {years} years"
+                f"{f' ({industry})' if industry else ''}{revenue_str}. "
+                f"Long-term operational continuity demonstrates management stability and "
+                f"reduces the risk of sudden business failure or operational inexperience."
+            ),
+        })
 
-    notes_lower = (extraction.broker_notes or "").lower()
+    if cov.get("multi_line"):
+        line_count = cov.get("line_count", 0)
+        positives.append({
+            "rule": f"Multi-line opportunity: {line_count} lines requested",
+            "detail": (
+                f"{company_name} is requesting {line_count} lines of coverage: {coverages_detail}. "
+                f"Multi-line accounts provide greater premium volume, deeper carrier relationship, "
+                f"and reduced risk of adverse selection compared to monoline submissions. "
+                f"This enhances the overall account attractiveness."
+            ),
+        })
+
+    if prop.get("sprinklered_count", 0) == prop.get("location_count", 1) and prop.get("location_count", 0) > 0:
+        positives.append({
+            "rule": "All locations fully sprinklered",
+            "detail": (
+                f"All {prop.get('location_count')} locations are fully sprinklered — "
+                f"reduces fire loss severity and frequency, directly improving loss ratio expectations."
+            ),
+        })
+
+    if claim_trend == "declining":
+        positives.append({
+            "rule": "Claim frequency is declining trend",
+            "detail": f"Claim frequency for {company_name} shows a declining trend — recent years have fewer losses than earlier periods, indicating improving risk management.",
+        })
+
+    if clean_years >= 5:
+        positives.append({
+            "rule": f"Strong clean history: {clean_years} years without claims",
+            "detail": f"{company_name} has {clean_years} years with zero claims in the policy period — strong indicator of operational discipline and low baseline risk.",
+        })
+
     if any(kw in notes_lower for kw in ["tips certified", "safety program", "osha", "safety manager"]):
-        positives.append("Formal safety program or certification in place")
+        positives.append({
+            "rule": "Formal safety program or certification in place",
+            "detail": f"Broker notes reference a formal safety program or certification — demonstrates proactive risk management beyond minimum compliance requirements.",
+        })
+
     if any(kw in notes_lower for kw in ["camera", "security system", "guard", "monitored"]):
-        positives.append("Enhanced security measures in place")
+        positives.append({
+            "rule": "Enhanced security measures in place",
+            "detail": f"Security systems referenced in broker notes — reduces theft, vandalism, and premises liability exposure.",
+        })
+
     if any(kw in notes_lower for kw in ["emr", "experience mod"]):
-        positives.append("Experience modification rate noted (check value)")
+        positives.append({
+            "rule": "Experience modification rate noted (check value)",
+            "detail": "Experience modification rate referenced — verify actual EMR value; favorable EMR confirms claims management performance.",
+        })
 
     # ══════════════════════════════════════════════════
     # MISSING INFO
@@ -239,56 +371,34 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
 
     # ══════════════════════════════════════════════════
     # MITIGATION-WEIGHTED DECISIONING
-    #
-    # Instead of: loss_ratio > 200 → always decline
-    # We compute: decline_weight - mitigation_credits → final status
-    #
-    # Each hard decline trigger has weight 1.0.
-    # Each mitigation credit reduces that weight.
-    # Adjusted weight maps to: decline / refer / refer_with_conditions.
-    #
-    # This correctly handles:
-    #   - BrightTech: 1 decline trigger, 4 mitigations → refer_with_conditions
-    #   - Fuego: 1 decline trigger, 2 mitigations, 2 carrier non-renewals → refer
-    #   - Truly bad risk: 3 decline triggers, no mitigations → decline
     # ══════════════════════════════════════════════════
 
     decline_triggers = [t for t in triggers if t["severity"] == "decline"]
     refer_triggers   = [t for t in triggers if t["severity"] == "refer"]
 
     if decline_triggers:
-        # Base weight: 1.0 per hard decline trigger
         base_weight = float(len(decline_triggers))
-
-        # Mitigation credits — each meaningful factor reduces the weight
         mitigation_total = 0.0
 
-        # Isolated catastrophic event (largest > 50% of total, not systemic)
         largest_incurred = largest_event.get("total_incurred", 0) if largest_event else 0
         if total_incurred > 0 and largest_incurred / total_incurred > 0.50:
             if not causation.get("systemic"):
-                # Catastrophic but isolated — significant credit
                 mitigation_total += 0.35
 
-        # Excellent underlying ratio (ex-largest)
         if loss_ratio_ex_cat is not None and loss_ratio_ex_cat < 30:
             mitigation_total += 0.25
 
-        # Subrogation potential reduces net exposure
         if subrogation.get("potential"):
             mitigation_total += 0.15
 
-        # Suppression worked — controls functioned correctly
         if suppression.get("effective"):
             mitigation_total += 0.10
 
-        # Clean years — good historical track record
         if clean_years >= 5:
             mitigation_total += 0.15
         elif clean_years >= 3:
             mitigation_total += 0.10
 
-        # Improvements documented in broker notes
         if any(kw in notes_lower for kw in
                ["upgrade", "improvement", "suppression installed", "electrical upgrade",
                 "thermal imaging", "protocol", "power-down", "retrofit"]):
@@ -302,10 +412,6 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
             mitigation_total=round(mitigation_total, 2),
             adjusted_weight=round(adjusted_weight, 2))
 
-        # Map adjusted weight to final status
-        # adjusted_weight > 0.75  → still a firm decline
-        # adjusted_weight 0.35–0.75 → refer (needs senior review)
-        # adjusted_weight < 0.35  → refer_with_conditions (likely salvageable)
         if adjusted_weight > 0.75:
             score = 1
             status = "decline"
@@ -376,7 +482,6 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     elif total_events == 0:
         winnability = 0.85
 
-    # Adjustments
     if carrier.get("non_renewal"):
         winnability -= 0.15
     if open_reserves > 100_000:
@@ -393,9 +498,12 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         winnability += 0.05
     if len(positives) >= 5:
         winnability += 0.05
-    # Upgrade for refer_with_conditions — we're likely to write this
     if status == "refer_with_conditions":
         winnability += 0.10
+
+    # Force low winnability for declines
+    if status == "decline":
+        winnability = min(winnability, 0.20)
 
     winnability = max(0.05, min(0.95, winnability))
 
@@ -418,13 +526,19 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         priority += 0.05
     priority = max(0.10, min(0.95, priority))
 
+    # ── Flatten positives for pipeline compatibility ──
+    # positives are now dicts with rule + detail
+    # pipeline.py already handles them correctly via positives[i]["rule"] and ["detail"]
+    # but old code expected plain strings — keep both formats available
+    positives_for_output = positives  # list of dicts now
+
     result = {
         "score": score,
         "status": status,
         "reasoning": reasoning,
         "triggers": triggers,
         "overrides": overrides,
-        "positives": positives,
+        "positives": positives_for_output,
         "missing_info": missing,
         "winnability": round(winnability, 2),
         "priority": round(priority, 2),
