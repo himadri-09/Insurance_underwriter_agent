@@ -264,26 +264,41 @@ class EvaluatorAgent:
         valid_uploaded: set,
         valid_chunks: set,
     ) -> list[SignalSource]:
-        """
-        Validate sources — only accept filenames we actually have.
-        Rejects invented filenames from LLM hallucination.
-        """
+
         valid_all = valid_uploaded | valid_chunks
+
+        # Build normalized lookup for fuzzy matching
+        def normalize(s: str) -> str:
+            return s.lower().replace("_", " ").replace("-", " ").strip()
+
+        normalized_map = {normalize(s): s for s in valid_all}
+
         validated = []
         for s in raw_sources:
             doc = s.get("doc", "")
             if not doc:
                 continue
-            if doc not in valid_all:
+
+            # 1. Exact match
+            if doc in valid_all:
+                validated.append(SignalSource(
+                    doc=doc,
+                    page=s.get("page"),
+                    section=s.get("section", ""),
+                ))
+            # 2. Fuzzy match — normalize underscores/spaces/case
+            elif normalize(doc) in normalized_map:
+                real_name = normalized_map[normalize(doc)]
+                log.info("source_normalized", llm_said=doc, actual=real_name)
+                validated.append(SignalSource(
+                    doc=real_name,
+                    page=s.get("page"),
+                    section=s.get("section", ""),
+                ))
+            else:
                 log.warning("source_invalid_rejected", doc=doc,
-                    valid_uploaded=list(valid_uploaded),
-                    valid_chunks=list(valid_chunks)[:5])
-                continue
-            validated.append(SignalSource(
-                doc=doc,
-                page=s.get("page"),
-                section=s.get("section", ""),
-            ))
+                    valid_sources=list(valid_all)[:5])
+
         return validated
 
     # ── Evaluate ─────────────────────────────────────

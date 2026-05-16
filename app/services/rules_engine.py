@@ -346,9 +346,31 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         })
 
     if any(kw in notes_lower for kw in ["emr", "experience mod"]):
+        import re
+        # Extract current EMR value from broker notes
+        emr_match = re.search(r'emr\s+(?:is\s+|of\s+|was\s+|:\s*)?(\d+\.\d+)', notes_lower)
+        emr_prev_match = re.search(r'(\d+\.\d+)\s+(?:two|2|last)\s+year', notes_lower)
+        emr_value = emr_match.group(1) if emr_match else None
+        emr_prev = emr_prev_match.group(1) if emr_prev_match else None
+
+        if emr_value:
+            trend_text = f", down from {emr_prev} two years ago" if emr_prev else ""
+            status_text = "above average vs industry peers" if float(emr_value) > 1.0 else "below average — favorable safety performance"
+            detail = (
+                f"{company_name} has a current EMR of {emr_value}{trend_text}. "
+                f"An EMR of {emr_value} is {status_text}. "
+                f"{'Downward trend from ' + emr_prev + ' indicates improving safety management and claims control.' if emr_prev else 'Verify current trend direction with broker.'}"
+            )
+        else:
+            detail = (
+                f"Experience modification rate referenced in broker notes for {company_name}. "
+                f"Verify exact EMR value — below 1.0 confirms favorable safety performance vs peers; "
+                f"above 1.0 indicates above-average claims history."
+            )
+
         positives.append({
             "rule": "Experience modification rate noted (check value)",
-            "detail": "Experience modification rate referenced — verify actual EMR value; favorable EMR confirms claims management performance.",
+            "detail": detail,
         })
 
     # ══════════════════════════════════════════════════

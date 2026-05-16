@@ -60,7 +60,7 @@ class ToolExecutor:
         results = await self.vector.hybrid_search(
             query=f"{lob} {query} loss ratio claims frequency",
             top_k=5, alpha=0.5,
-            filters={"lob": lob} if lob else {},
+            filters={"doc_type": "reference"},  # all appetite guide chunks tagged "reference"
         )
         return self._format_results(results, query)
 
