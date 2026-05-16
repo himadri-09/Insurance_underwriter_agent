@@ -332,12 +332,6 @@ Return JSON:
                 state.scoring.recommended_queue = result.get("recommended_queue", "general")
                 state.scoring.broker_questions = result.get("broker_questions", [])
 
-                # Add positive reasons to appetite
-                if rules_result.get("positives"):
-                    state.appetite.reasons.extend([f"POSITIVE: {p}" for p in rules_result["positives"]])
-                if rules_result.get("overrides"):
-                    state.appetite.reasons.extend([f"OVERRIDE: {o['rule']}" for o in rules_result["overrides"]])
-
                 log.info("evaluation_done",
                     queue=state.scoring.recommended_queue,
                     broker_questions=len(state.scoring.broker_questions),

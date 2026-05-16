@@ -92,7 +92,7 @@ async def extract_node(state: GraphState) -> GraphState:
 
 
 async def analyze_node(state: GraphState) -> GraphState:
-    """NEW: Deterministic analytics + rules engine. No LLM."""
+    """Deterministic analytics + rules engine. No LLM."""
     log.info("pipeline_stage", stage="analyze")
     ps = state["pipeline"]
 
@@ -104,37 +104,70 @@ async def analyze_node(state: GraphState) -> GraphState:
         ps.form_data["_analytics"] = analytics
         ps.form_data["_rules_result"] = rules_result
 
-        # Pre-populate appetite from rules engine
+        # ── Build rule_results with ALL three signal types ──────────────
+        # Previously only triggers were added; overrides and positives were
+        # lost here and only partially recovered later as raw strings by
+        # the evaluator. Now all three are structured and sent to frontend.
+
+        all_rule_results: List[RuleResult] = []
+
+        # 1. Triggers — negative signals (decline / refer)
+        for i, t in enumerate(rules_result.get("triggers", [])):
+            all_rule_results.append(RuleResult(
+                rule_id=f"trigger_{i}",
+                rule_name=t["rule"],
+                passed=False,
+                reason=t["detail"],
+                severity=t["severity"],   # "decline" or "refer"
+            ))
+
+        # 2. Overrides — mitigating factors (were completely dropped before)
+        for i, o in enumerate(rules_result.get("overrides", [])):
+            all_rule_results.append(RuleResult(
+                rule_id=f"override_{i}",
+                rule_name=o["rule"],
+                passed=True,
+                reason=o["detail"],
+                severity="override",
+            ))
+
+        # 3. Positives — green signals (were dropped as plain strings before)
+        for i, p in enumerate(rules_result.get("positives", [])):
+            all_rule_results.append(RuleResult(
+                rule_id=f"positive_{i}",
+                rule_name=p,
+                passed=True,
+                reason=p,
+                severity="positive",
+            ))
+
+        # ── Pre-populate appetite ────────────────────────────────────────
         ps.appetite = AppetiteAssessment(
             score=rules_result["score"],
             status=AppetiteStatus(rules_result["status"]),
-            reasons=[t["rule"] + " — " + t["detail"] for t in rules_result["triggers"]],
-            rule_results=[
-                RuleResult(
-                    rule_id=f"trigger_{i}",
-                    rule_name=t["rule"],
-                    passed=False,
-                    reason=t["detail"],
-                    severity=t["severity"],
-                )
-                for i, t in enumerate(rules_result["triggers"])
-            ],
+            reasons=[r.rule_name + " — " + r.reason for r in all_rule_results],
+            rule_results=all_rule_results,
         )
 
-        # Pre-populate scoring from rules engine
+        # ── Pre-populate scoring ─────────────────────────────────────────
         ps.scoring = SubmissionScoring(
             winnability_score=rules_result["winnability"],
             priority_score=rules_result["priority"],
             referral_required=rules_result["status"] in ("refer", "decline"),
-            referral_reasons=[t["rule"] for t in rules_result["triggers"] if t["severity"] in ("refer", "decline")],
+            referral_reasons=[
+                t["rule"] for t in rules_result["triggers"]
+                if t["severity"] in ("refer", "decline")
+            ],
         )
 
         log.info("analyze_done",
             score=rules_result["score"],
             status=rules_result["status"],
             winnability=rules_result["winnability"],
-            triggers=len(rules_result["triggers"]),
-            overrides=len(rules_result["overrides"]),
+            triggers=len(rules_result.get("triggers", [])),
+            overrides=len(rules_result.get("overrides", [])),
+            positives=len(rules_result.get("positives", [])),
+            total_signals=len(all_rule_results),
         )
         audit_log(ps.submission_id, "analyze", "done", {
             "score": rules_result["score"],
@@ -142,6 +175,9 @@ async def analyze_node(state: GraphState) -> GraphState:
             "winnability": rules_result["winnability"],
             "priority": rules_result["priority"],
             "loss_ratio": rules_result["analytics_summary"]["loss_ratio"],
+            "triggers": len(rules_result.get("triggers", [])),
+            "overrides": len(rules_result.get("overrides", [])),
+            "positives": len(rules_result.get("positives", [])),
         })
 
     except Exception as e:
