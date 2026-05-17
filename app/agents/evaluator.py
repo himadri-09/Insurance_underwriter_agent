@@ -269,21 +269,37 @@ class EvaluatorAgent:
         Rejects invented filenames from LLM hallucination.
         """
         valid_all = valid_uploaded | valid_chunks
+        # Build lowercase → canonical lookup for case-insensitive fallback
+        lower_to_canonical = {v.lower(): v for v in valid_all}
+
+        log.info("validating_sources",
+            raw_count=len(raw_sources),
+            raw_docs=[s.get("doc", "") for s in raw_sources],
+            valid_uploaded=list(valid_uploaded),
+            valid_chunks=list(valid_chunks),
+        )
+
         validated = []
         for s in raw_sources:
             doc = s.get("doc", "")
             if not doc:
                 continue
-            if doc not in valid_all:
+            # Exact match first
+            if doc in valid_all:
+                canonical = doc
+            else:
+                # Case-insensitive fallback — handles minor LLM capitalisation drift
+                canonical = lower_to_canonical.get(doc.lower())
+            if canonical:
+                validated.append(SignalSource(
+                    doc=canonical,
+                    page=s.get("page"),
+                    section=s.get("section", ""),
+                ))
+            else:
                 log.warning("source_invalid_rejected", doc=doc,
                     valid_uploaded=list(valid_uploaded),
-                    valid_chunks=list(valid_chunks)[:5])
-                continue
-            validated.append(SignalSource(
-                doc=doc,
-                page=s.get("page"),
-                section=s.get("section", ""),
-            ))
+                    valid_chunks=list(valid_chunks))
         return validated
 
     # ── Evaluate ─────────────────────────────────────
@@ -313,6 +329,13 @@ class EvaluatorAgent:
 
         # Build uploaded docs set — chunk set built after tool calls complete
         valid_uploaded = {doc.filename for doc in state.documents if doc.filename}
+
+        # List initial chunk source names explicitly so the LLM can cite them precisely.
+        # Tool-retrieved chunks will add more names (shown in [brackets] in tool results).
+        initial_chunk_sources = sorted(
+            {c.source_doc for c in state.retrieved_chunks if c.source_doc} - valid_uploaded
+        )
+        ref_sources_text = "\n".join(f"- {s}" for s in initial_chunk_sources) or "(none pre-loaded)"
 
         company_name = state.extraction.company.name or "The insured"
 
@@ -367,8 +390,12 @@ Reasoning: {rules_result.get('reasoning', '')}
 ## Retrieved Policy Evidence
 {self._format_initial_evidence(state)}
 
-## Uploaded Source Documents
+## Uploaded Source Documents (submission files — cite for claim counts, loss figures, company facts)
 {uploaded_docs}
+
+## Available Policy Reference Sources (appetite guide chunks — cite for policy thresholds, rules, eligibility)
+{ref_sources_text}
+Any additional reference sources retrieved during tool calls will appear in [brackets] in those results — use those exact names too.
 
 ---
 
@@ -393,22 +420,23 @@ Return ONLY this JSON — no extra text:
   "recommended_queue": "<preferred-commercial|standard-commercial|specialty-commercial|large-account|referral-senior-uw|decline-review>",
   "broker_questions": ["q1", "q2", "q3"],
   "signal_narratives": {{
-    "trigger_0": {{
-      "narrative": "2-3 sentence company-specific explanation with real numbers."
-    }},
-    "override_0": {{
-      "narrative": "2-3 sentence explanation of why this mitigates the risk."
-    }},
-    "positive_0": {{
-      "narrative": "2-3 sentence explanation of why this is a positive indicator."
-    }}
+{chr(10).join(f'    "{r.rule_id}": {{"narrative": "2-3 sentence explanation.", "sources": [{{"doc": "exact_filename.pdf", "page": null, "section": ""}}]}}'  for r in state.appetite.rule_results)}
   }}
 }}
+
+CRITICAL: You MUST write a narrative for ALL {len(state.appetite.rule_results)} signals.
+Required rule_ids — do not skip any: {[r.rule_id for r in state.appetite.rule_results]}
 
 Rules:
 - Key must exactly match the rule_id: trigger_0, trigger_1, override_0, positive_0, etc.
 - narrative must be at least 2 sentences and must name {company_name}
-- Use exact numbers from the signal detail — do NOT invent or recalculate"""
+- Use exact numbers from the signal detail — do NOT invent or recalculate
+- sources: list ONLY the specific uploaded docs or retrieved policy chunks that directly support THIS signal's narrative
+  - Use exact filenames from "Uploaded Source Documents" or exact source names from "Retrieved Policy Evidence"
+  - Do NOT list every uploaded doc on every signal — only files containing evidence for this specific signal
+  - For submission-data signals (loss ratio, claims count) cite the loss run / ACORD upload
+  - For policy/appetite signals cite the retrieved chunk source name
+  - page: use the page number from the retrieved evidence, or null for uploaded submission docs"""
 
         try:
             result, new_chunks = await self._run_with_tools(system, user_prompt, state)
@@ -425,9 +453,69 @@ Rules:
                 signal_narratives = result.get("signal_narratives", {})
                 narratives_applied = 0
 
+                # Fallback upload sources — used only when LLM returns no valid sources
+                fallback_uploaded = [
+                    SignalSource(doc=doc.filename, page=None, section="")
+                    for doc in state.documents
+                    if doc.filename
+                ]
+
+                # Prefer tool-retrieved chunks (fetched specifically for this submission)
+                # over initial RAG chunks; within each group rank by score descending.
+                def _chunk_sort_key(c):
+                    tier = 0 if c.match_type == "tool_retrieval" else 1
+                    return (tier, -c.score)
+
+                ref_chunks_ranked = sorted(
+                    [c for c in state.retrieved_chunks if c.source_doc and c.source_doc not in valid_uploaded],
+                    key=_chunk_sort_key,
+                )
+
                 for r in state.appetite.rule_results:
                     if r.rule_id in signal_narratives:
                         sig = signal_narratives[r.rule_id]
+
+                        # Per-signal sources — validate against real filenames only
+                        raw_sources = sig.get("sources", [])
+                        if raw_sources:
+                            r.sources = self._validate_sources(
+                                raw_sources, valid_uploaded, valid_chunks
+                            )
+
+                        # If LLM gave no valid sources at all, use uploaded submission docs
+                        if not r.sources:
+                            r.sources = fallback_uploaded[:2]
+
+                        # If no chunk (policy guide) source included, find the best-matching chunk.
+                        # Require at least MIN_OVERLAP shared keywords — avoids attaching
+                        # a completely unrelated chunk (e.g. terrorism clauses for a loss ratio signal).
+                        MIN_OVERLAP = 2
+                        has_chunk_source = any(s.doc not in valid_uploaded for s in r.sources)
+                        if not has_chunk_source and ref_chunks_ranked:
+                            signal_keywords = set((r.rule_name + " " + r.reason).lower().split())
+                            scored = [
+                                (len(signal_keywords & set((c.section + " " + c.text[:300]).lower().split())), c)
+                                for c in ref_chunks_ranked[:20]
+                            ]
+                            best_overlap, best_chunk = max(scored, key=lambda x: x[0])
+                            if best_overlap >= MIN_OVERLAP:
+                                r.sources.append(SignalSource(
+                                    doc=best_chunk.source_doc,
+                                    page=best_chunk.page,
+                                    section=best_chunk.section or "",
+                                ))
+                                log.info("chunk_source_fallback_applied",
+                                    rule_id=r.rule_id,
+                                    chunk_source=best_chunk.source_doc,
+                                    chunk_page=best_chunk.page,
+                                    keyword_overlap=best_overlap,
+                                )
+                            else:
+                                log.warning("chunk_source_fallback_skipped",
+                                    rule_id=r.rule_id,
+                                    best_overlap=best_overlap,
+                                    min_required=MIN_OVERLAP,
+                                )
 
                         # Validate narrative
                         raw_narrative = sig.get("narrative", "").strip()
@@ -437,20 +525,9 @@ Rules:
                         if validated_narrative:
                             r.narrative = validated_narrative
                             narratives_applied += 1
-
-                        # Sources — use actual chunk metadata directly from Pinecone
-                        # Never trust LLM-generated filenames
-                        r.sources = [
-                            SignalSource(
-                                doc=c.source_doc,
-                                page=c.page,
-                                section=c.section or "",
-                            )
-                            for c in state.retrieved_chunks
-                            if c.source_doc
-                        ][:3]
                     else:
                         log.warning("narrative_missing_for_signal", rule_id=r.rule_id)
+                        r.sources = fallback_uploaded[:2]
 
                 log.info("evaluation_done",
                     queue=state.scoring.recommended_queue,
