@@ -65,20 +65,33 @@ class BriefWriterAgent:
         # Claim trend — use exact computed value, map to correct language
         claim_trend = uw.get("claim_trend", "stable")
         trend_map = {
-            "stable": "loss activity has remained stable",
-            "declining": "claim frequency is trending downward",
+            "stable": "loss activity remains manageable without evidence of worsening frequency or severity trends",
+            "declining": "claim frequency is trending downward — improving risk profile",
             "increasing": "frequency is moderately elevated — above appetite threshold",
-            "stable_frequency_severity_spike": "frequency is stable with one severity outlier",
+            "stable_frequency_severity_spike": "frequency is stable with one isolated severity outlier",
             "no_claims": "no claims in the policy period",
-            "single_year_data": "single year of data available",
+            "single_year_data": "single year of data available — trend indeterminate",
         }
         sections.append(f"Claim Trend: {trend_map.get(claim_trend, claim_trend)}")
 
-        # Largest claim — authoritative
+        # Largest claim and average severity with TIV context
         if uw.get("largest_claim_amount"):
             sections.append(
                 f"Largest Single Claim: ${uw['largest_claim_amount']:,.0f} "
                 f"({uw.get('largest_claim_type', '')} on {uw.get('largest_claim_date', '')})"
+            )
+        total_claims = uw.get("total_claims", 0)
+        total_incurred_val = uw.get("total_incurred", 0)
+        if total_claims > 0 and total_incurred_val > 0:
+            avg_severity = total_incurred_val / total_claims
+            tiv = analytics.get("property", {}).get("total_tiv", 0)
+            tiv_context = (
+                f" — {avg_severity / tiv * 100:.1f}% of TIV (${tiv:,.0f})" if tiv > 0 else ""
+            )
+            sections.append(
+                f"Average Claim Severity: ${avg_severity:,.0f}{tiv_context}. "
+                f"NOTE: For multifamily property, contextualize severity against TIV and occupancy — "
+                f"a moderate average severity is not automatically disqualifying."
             )
 
         # Causation — authoritative, never override with "systemic" if systemic=False
@@ -152,9 +165,28 @@ class BriefWriterAgent:
         current_carriers = uw.get("current_carriers", [])
         systemic = uw.get("systemic", False)
 
+        # Build state context — distinguish HQ state from operational states
+        ext = state.extraction
+        hq_state = ext.company.state or ""
+        location_states = list({loc.state for loc in ext.locations if loc.state})
+        non_hq_states = [s for s in location_states if s != hq_state]
+        if hq_state and non_hq_states:
+            state_line = (
+                f"Company HQ State: {hq_state} "
+                f"(operations also in: {', '.join(sorted(non_hq_states))}). "
+                f"Use HQ state for 'State:' field in the brief — do NOT use a property location state."
+            )
+        elif hq_state:
+            state_line = f"Company HQ State: {hq_state}"
+        elif location_states:
+            state_line = f"Primary operations state: {location_states[0]} (HQ state not provided)"
+        else:
+            state_line = "State: Not specified"
+
         lines = [
             "## ══ GROUNDED FACTS ══ USE THESE EXACT VALUES — DO NOT CHANGE OR INVENT ALTERNATIVES",
             f"Company: {uw.get('company_name', 'Unknown')}",
+            state_line,
             f"Loss Ratio: {uw.get('loss_ratio', 'N/A')}%",
             f"Loss Ratio (ex. largest claim): {uw.get('loss_ratio_ex_largest', 'N/A')}%",
             f"Total Claims: {uw.get('total_claims', 0)}",

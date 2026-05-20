@@ -142,6 +142,7 @@ class LossRecord(BaseModel):
     amount_reserved: float = 0.0
     incurred: float = 0.0
     subrogation: Optional[str] = None
+    source_verified: bool = False  # True only when sourced from an official carrier loss run
 
 
 # ── Coverage ─────────────────────────────────────────
@@ -235,6 +236,8 @@ class ExtractionResult(BaseModel):
     stated_loss_years_covered: str = ""                # e.g. "2022-2026" or "5 years"
     raw_fields: List[ExtractedField] = []
     missing_fields: List[str] = []
+    # ── Data integrity conflicts detected during merge ────────────────
+    data_conflicts: List[str] = []             # mismatches between loss run, ACORD, and broker docs
 
 
 # ── Retrieval ────────────────────────────────────────

@@ -161,51 +161,122 @@ def _merge_loss_record(merged_list: list, record: dict, is_loss_run: bool, sourc
     """
     Add a loss record to merged_list using three-tier deduplication.
 
-    Tier 1 — exact claim number match: both records have a claim number and it matches.
-    Tier 2 — year + amount match: same loss year AND same incurred amount.
-             This catches broker submission summaries (no claim number) vs
-             loss run detail rows (with claim number) for the same event.
-    Tier 3 — loss-run wins: when a duplicate is found and the incoming record
-             is from the loss run while the existing one is not, upgrade
-             (replace) the existing record with the richer loss-run record.
+    Tier 1 — exact claim number match.
+    Tier 2 — same year + exact amount match.
+    Tier 3 — same year + amount within 10% + same LOB (near-match).
+    Loss-run records always win over broker/ACORD records on any match.
+    Every record is stamped with source_verified so downstream can trust only loss-run data.
     """
+    record["source_verified"] = is_loss_run
+
     claim_num = record.get("claim_number")
     rec_year  = _loss_year(record)
     rec_amt   = _incurred_amount(record)
+    rec_lob   = (record.get("lob") or "").lower().strip()
 
-    duplicate  = False
+    duplicate   = False
     replace_idx = None
+    match_type  = None
 
     for i, existing in enumerate(merged_list):
         ex_claim_num = existing.get("claim_number")
         ex_year      = _loss_year(existing)
         ex_amt       = _incurred_amount(existing)
+        ex_lob       = (existing.get("lob") or "").lower().strip()
 
-        # Tier 1: both records have claim numbers and they match
+        # Tier 1: exact claim number
         if claim_num and ex_claim_num and claim_num == ex_claim_num:
-            duplicate = True
-            if is_loss_run and not ex_claim_num:
+            duplicate  = True
+            match_type = "exact_claim_number"
+            if is_loss_run and not existing.get("source_verified"):
                 replace_idx = i
             break
 
-        # Tier 2: same year + same incurred amount
-        if rec_year and ex_year and rec_year == ex_year and rec_amt and rec_amt == ex_amt:
-            duplicate = True
-            # Upgrade only if incoming is from loss run and existing has no claim number
-            if is_loss_run and not ex_claim_num:
-                replace_idx = i
-            break
+        if rec_year and ex_year and rec_year == ex_year:
+            # Tier 2: same year + exact amount
+            if rec_amt and rec_amt == ex_amt:
+                duplicate  = True
+                match_type = "fuzzy_year_amount"
+                if is_loss_run and not existing.get("source_verified"):
+                    replace_idx = i
+                break
+
+            # Tier 3: same year + amount within 10% + same LOB
+            if rec_amt and ex_amt and ex_amt > 0:
+                ratio = rec_amt / ex_amt
+                if 0.90 <= ratio <= 1.10 and rec_lob and rec_lob == ex_lob:
+                    duplicate  = True
+                    match_type = "near_year_amount_lob"
+                    if is_loss_run and not existing.get("source_verified"):
+                        replace_idx = i
+                    break
 
     if duplicate and replace_idx is not None:
         log.info("duplicate_claim_upgraded",
-            year=rec_year, amount=rec_amt,
+            year=rec_year, amount=rec_amt, match_type=match_type,
             claim_number=claim_num, source=source)
         merged_list[replace_idx] = record
     elif duplicate:
         log.info("duplicate_claim_skipped",
-            claim_number=claim_num, year=rec_year, source=source)
+            claim_number=claim_num, year=rec_year, match_type=match_type, source=source)
     else:
         merged_list.append(record)
+
+
+def _detect_claim_conflicts(loss_history: list) -> list:
+    """
+    After merge, compare unverified (broker/ACORD) claims against verified (loss run) claims.
+
+    Match types and reactions:
+      EXACT / FUZZY / NEAR  — already deduped in _merge_loss_record, no conflict
+      CONFLICT              — same year, amount diverges >10%  → flag + broker question
+      UNVERIFIED            — broker claim, no loss run record for that year → flag + question
+      NO_LOSS_RUN           — no verified claims at all → add missing-loss-run question
+    """
+    has_loss_run = any(r.get("source_verified") for r in loss_history)
+    if not has_loss_run:
+        return [
+            "No official carrier loss run was provided. All claim figures are from broker "
+            "submission or ACORD forms only and are unverified. Please submit a 5-year "
+            "carrier-issued loss run to complete underwriting review."
+        ]
+
+    verified   = [r for r in loss_history if r.get("source_verified")]
+    unverified = [r for r in loss_history if not r.get("source_verified")]
+
+    if not unverified:
+        return []
+
+    conflicts = []
+    for uv in unverified:
+        uv_year = _loss_year(uv)
+        uv_date = uv.get("date_of_loss") or "unknown date"
+        uv_amt  = _incurred_amount(uv)
+        uv_type = uv.get("type") or "unknown type"
+
+        same_year_verified = [v for v in verified if _loss_year(v) == uv_year]
+
+        if same_year_verified:
+            # Same year in loss run — amount diverged enough that Tier 2/3 didn't match
+            v      = same_year_verified[0]
+            v_date = v.get("date_of_loss") or "unknown date"
+            v_amt  = _incurred_amount(v)
+            amt_str = f"${uv_amt:,.0f}" if uv_amt else "amount unknown"
+            conflicts.append(
+                f"Claim conflict in {uv_year}: the official loss run shows "
+                f"{v_date} (${v_amt:,.0f}) but the broker/ACORD submission shows "
+                f"{uv_date} ({amt_str}). Please confirm the correct date and amount — "
+                f"loss run figures are used for underwriting."
+            )
+        else:
+            # Year not covered by loss run at all
+            conflicts.append(
+                f"Broker-reported claim ({uv_type} on {uv_date}) was not found in the "
+                f"official loss run. Please provide an updated loss run that includes "
+                f"this claim, or confirm it falls outside the policy period."
+            )
+
+    return conflicts
 
 
 class ExtractorAgent:
@@ -516,6 +587,14 @@ class ExtractorAgent:
                 if open_count > 0:
                     summary["open_claims"] = open_count
 
+        # Detect data integrity conflicts between loss run and broker/ACORD claims
+        conflicts = _detect_claim_conflicts(merged["loss_history"])
+        merged["data_conflicts"] = conflicts
+        if conflicts:
+            log.warning("data_conflicts_detected", count=len(conflicts), conflicts=conflicts)
+        else:
+            log.info("data_conflicts_none")
+
         # Log final merged state
         log.info(
             "merge_complete",
@@ -524,6 +603,7 @@ class ExtractorAgent:
             total_locations=len(merged["locations"]),
             total_coverages=len(merged["coverages"]),
             has_summary=bool(merged["summary"]),
+            data_conflicts=len(conflicts),
             summary_total_premium=merged["summary"].get("total_premium") if merged["summary"] else None,
             summary_total_claims=merged["summary"].get("total_claims") if merged["summary"] else None,
             summary_total_incurred=merged["summary"].get("total_incurred") if merged["summary"] else None,
@@ -550,10 +630,18 @@ class ExtractorAgent:
         for loc in raw.get("locations", []):
             if isinstance(loc, dict):
                 try:
-                    result.locations.append(LocationInfo(**{
+                    cleaned = {
                         k: v for k, v in loc.items()
                         if k in LocationInfo.model_fields and v is not None
-                    }))
+                    }
+                    # Coerce any bool field where LLM returned a descriptive string
+                    # e.g. sprinklered="Wet Pipe (40% coverage)", alarm_system="Central Station"
+                    _bool_fields = {"sprinklered", "alarm_system", "historical_landmark"}
+                    for _bf in _bool_fields:
+                        if _bf in cleaned and not isinstance(cleaned[_bf], bool):
+                            val = str(cleaned[_bf]).strip().lower()
+                            cleaned[_bf] = val not in ("false", "no", "none", "0", "")
+                    result.locations.append(LocationInfo(**cleaned))
                 except Exception as e:
                     log.warning("location_skipped", error=str(e))
 
@@ -615,6 +703,9 @@ class ExtractorAgent:
 
         # Requested effective date
         result.requested_effective_date = raw.get("requested_effective_date", "")
+
+        # Data integrity conflicts detected during merge
+        result.data_conflicts = raw.get("data_conflicts", [])
 
         # ── STATED PREMIUM & INCURRED from loss run summary ─────────────────
         summary = raw.get("summary", {})

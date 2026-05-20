@@ -298,9 +298,22 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
         })
 
     if subrogation.get("potential"):
+        details = (subrogation.get("details") or "").strip()
+        if details and any(kw in details.lower() for kw in
+                           ["contractor", "manufacturer", "defect", "recovery", "third party", "subrogation"]):
+            sub_detail = (
+                f"Subrogation potential identified for {company_name}: {details[:200]}. "
+                f"If recovery is pursued, net incurred exposure may be reduced."
+            )
+        else:
+            sub_detail = (
+                f"Potential subrogation opportunities may exist for {company_name} pending "
+                f"further carrier claim review. No specific recovery documentation has been "
+                f"provided at this stage — this factor provides a modest offset to overall exposure."
+            )
         overrides.append({
             "rule": "OVERRIDE: Subrogation recovery potential",
-            "detail": f"Subrogation potential identified — may reduce net incurred exposure. Details: {subrogation.get('details', '')[:200]}",
+            "detail": sub_detail,
         })
 
     if suppression.get("effective"):

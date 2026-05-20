@@ -107,8 +107,8 @@ def _build_uw_facts(analytics: dict, rules_result: dict, extraction) -> dict:
     return {
         # Company
         "company_name": extraction.company.name or "The insured",
- 
-        # Loss metrics — from deterministic analytics ONLY
+
+        # Loss metrics — from deterministic analytics ONLY (verified claims only when loss run present)
         "loss_ratio": loss.get("loss_ratio_pct"),
         "loss_ratio_ex_largest": loss.get("loss_ratio_ex_largest_pct"),
         "total_claims": loss.get("total_events", 0),
@@ -118,21 +118,26 @@ def _build_uw_facts(analytics: dict, rules_result: dict, extraction) -> dict:
         "open_reserves": loss.get("open_reserves", 0),
         "claim_trend": loss.get("claim_trend", "stable"),
         "clean_years": loss.get("clean_years", 0),
- 
+
+        # Data integrity — unverified claims excluded from metrics above
+        "has_loss_run": loss.get("has_loss_run", False),
+        "unverified_claim_count": loss.get("unverified_claim_count", 0),
+        "data_conflicts": extraction.data_conflicts,
+
         # Largest claim — authoritative
         "largest_claim_amount": largest_amount,
         "largest_claim_type": largest_type,
         "largest_claim_date": largest_date,
- 
+
         # Causation — from analytics, never LLM
         "systemic": causation.get("systemic", False),
         "causation_types": causation.get("unique_types", []),
- 
+
         # Carrier history — authoritative
         "prior_nonrenewal": carrier.get("non_renewal", False),
         "prior_nonrenewal_carriers": non_renewal_carriers,
         "current_carriers": list(set(current_carriers)),
- 
+
         # Rules engine decision
         "appetite_score": rules_result.get("score", 3),
         "appetite_status": rules_result.get("status", "review"),

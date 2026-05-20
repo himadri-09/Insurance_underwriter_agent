@@ -374,11 +374,14 @@ Referral triggers are NOT binary. Consider mitigating factors:
   - Loss frequency is declining over 3+ years
   - All claims are low severity
 
-- "3-4 claims" referral can be OVERRIDDEN if:
-  - Claims are across DIFFERENT lines (not concentrated)
-  - Average severity is below $15,000
-  - No open claims with large reserves
-  - Frequency trend is flat or declining
+- "3-4 claims" referral can ONLY be overridden if ALL FOUR of the following
+  conditions pass simultaneously. This is a unanimous AND check — if even ONE
+  condition fails, the override does NOT apply and the referral trigger stands:
+  - Claims are across DIFFERENT lines (not concentrated in one line)
+  - Average severity is below $15,000 per claim
+  - No open claims with large reserves (reserves under $100K)
+  - Frequency trend is flat or declining (not increasing)
+  If any single condition fails, state: "Override NOT applicable — [condition that failed]. Referral trigger stands."
 
 - "Limits exceeding $5M" means ABOVE $5M, not equal to $5M. $5M exactly does NOT trigger referral.
 
@@ -536,7 +539,18 @@ Structure:
 4. **Property Summary**: Number of locations, construction types, values, protection, condition
 5. **Loss History**: Claim count by line, loss ratio from the pre-computed analytics, trend, largest loss, open claims
 6. **Coverage Analysis**: Lines requested with limits/deductibles, vs what we'd recommend
-7. **Appetite Alignment**: Fit assessment citing specific underwriting rules
+7. **Appetite Alignment**: Fit assessment citing specific underwriting rules.
+   For every referral trigger fired, document the following override check.
+   ALL FOUR conditions must pass — this is a unanimous AND check, not a majority vote.
+   If even ONE condition fails, the override does NOT apply:
+   - Claims across different lines? (YES/NO)
+   - Average severity below $15K? (YES/NO — state the actual computed average)
+   - No open claims with large reserves? (YES/NO)
+   - Frequency trend flat or declining? (YES/NO)
+   Override verdict rules:
+   - All four YES → "Override applies — all conditions met."
+   - Any one NO  → "Override NOT applicable — [name the specific failed condition, state actual value]. Referral trigger stands."
+   Never declare override applies if any condition is NO.
 8. **Risk Improvements**: Any risk mitigation steps taken (if mentioned in broker notes or extracted data)
 9. **Key Concerns**: Top 3 risks or red flags (numbered)
 10. **Recommendation**: Accept/Review/Decline/Refer with specific action items
@@ -566,12 +580,13 @@ Rules:
  
 Use the Claim Trend value from the GROUNDED FACTS / PRE-COMPUTED ANALYTICS block directly.
 Map it to exact language:
-- "stable" → "loss activity has remained stable"
-- "declining" → "claim frequency is trending downward"  
+- "stable" → "loss activity remains manageable without evidence of worsening frequency or severity trends"
+- "declining" → "claim frequency is trending downward — improving risk profile"
 - "increasing" → "frequency is moderately elevated — above appetite threshold"
   NOTE: Do NOT say "increasing trend" — say "moderately elevated frequency"
-- "stable_frequency_severity_spike" → "frequency is stable with one severity outlier"
+- "stable_frequency_severity_spike" → "frequency is stable with one isolated severity outlier"
 - "no_claims" → "no claims in the policy period"
+- "single_year_data" → "single year of data available — trend indeterminate"
  
 NEVER characterize trend as "increasing" in the Key Concerns section — 
 use "frequency-driven operational exposure" or "claim frequency above appetite threshold" instead.

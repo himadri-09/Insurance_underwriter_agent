@@ -352,17 +352,59 @@ You have search tools to look up policy language for the narratives and broker q
 
         # Pull canonical facts object — single source of truth
         uw = state.form_data.get("_uw_facts", {})
-        uw_facts_block = f"""## ══ GROUNDED FACTS — USE THESE EXACT VALUES IN ALL NARRATIVES ══
-Company: {uw.get('company_name', company_name)}
-Loss Ratio: {uw.get('loss_ratio', 'N/A')}%
-Loss Ratio (ex. largest): {uw.get('loss_ratio_ex_largest', 'N/A')}%
-Total Claims: {uw.get('total_claims', 0)}
-Total Incurred: ${uw.get('total_incurred', 0):,.0f}
-Largest Single Claim: ${uw.get('largest_claim_amount', 0):,.0f} ({uw.get('largest_claim_type', '')} on {uw.get('largest_claim_date', '')})
-Open Claims: {uw.get('open_claims', 0)}
-Causation: {'SYSTEMIC' if uw.get('systemic') else 'ISOLATED — do NOT use word systemic'}
-Prior Non-Renewal: {'YES — by ' + ', '.join(uw.get('prior_nonrenewal_carriers', [])) if uw.get('prior_nonrenewal') else 'NO'}
-Current Carrier(s): {', '.join(uw.get('current_carriers', [])) or 'Not specified'}"""
+
+        # Data integrity block — conflicts become mandatory first broker questions
+        data_conflicts   = uw.get("data_conflicts", [])
+        unverified_count = uw.get("unverified_claim_count", 0)
+        has_loss_run     = uw.get("has_loss_run", True)
+
+        if data_conflicts:
+            conflict_lines = "\n".join(f"  {i+1}. {c}" for i, c in enumerate(data_conflicts))
+            conflicts_block = f"""
+## ⚠ DATA INTEGRITY CONFLICTS — MANDATORY BROKER QUESTIONS
+The following mismatches were detected between the submitted documents.
+You MUST include a specific broker question for EACH conflict below as your FIRST questions.
+Do NOT skip or merge these — each conflict needs its own question:
+{conflict_lines}
+"""
+        elif not has_loss_run:
+            conflicts_block = """
+## ⚠ NO LOSS RUN PROVIDED
+No official carrier loss run was submitted. All claim data is from broker/ACORD forms only.
+You MUST include this as broker question #1:
+  "No official carrier loss run was provided. Please submit a 5-year carrier-issued loss run to complete underwriting review."
+"""
+        elif unverified_count > 0:
+            conflicts_block = f"""
+## ⚠ UNVERIFIED CLAIMS
+{unverified_count} broker-reported claim(s) could not be matched to the official loss run.
+You MUST ask the broker to reconcile these in your broker questions.
+"""
+        else:
+            conflicts_block = ""
+
+        loss_source_note = (
+            f"(verified from loss run — {unverified_count} additional broker-reported claim(s) excluded from metrics)"
+            if unverified_count > 0 else
+            "(verified from loss run)" if has_loss_run else
+            "(broker-reported only — no loss run submitted)"
+        )
+
+        uw_facts_block = (
+            f"## ══ GROUNDED FACTS — USE THESE EXACT VALUES IN ALL NARRATIVES ══\n"
+            f"Company: {uw.get('company_name', company_name)}\n"
+            f"Loss Ratio: {uw.get('loss_ratio', 'N/A')}% {loss_source_note}\n"
+            f"Loss Ratio (ex. largest): {uw.get('loss_ratio_ex_largest', 'N/A')}%\n"
+            f"Total Claims: {uw.get('total_claims', 0)} {loss_source_note}\n"
+            f"Total Incurred: ${uw.get('total_incurred', 0):,.0f}\n"
+            f"Largest Single Claim: ${uw.get('largest_claim_amount', 0):,.0f}"
+            f" ({uw.get('largest_claim_type', '')} on {uw.get('largest_claim_date', '')})\n"
+            f"Open Claims: {uw.get('open_claims', 0)}\n"
+            f"Causation: {'SYSTEMIC' if uw.get('systemic') else 'ISOLATED - do NOT use word systemic'}\n"
+            f"Prior Non-Renewal: {'YES - by ' + ', '.join(uw.get('prior_nonrenewal_carriers', [])) if uw.get('prior_nonrenewal') else 'NO'}\n"
+            f"Current Carrier(s): {', '.join(uw.get('current_carriers', [])) or 'Not specified'}\n"
+            f"{conflicts_block}"
+        )
 
         user_prompt = f"""{uw_facts_block}
 

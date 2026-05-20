@@ -27,8 +27,24 @@ log = structlog.get_logger()
 def compute_analytics(extraction: ExtractionResult) -> dict:
     analytics = {}
 
-    losses = extraction.loss_history
-    premiums = extraction.prior_insurance
+    all_losses = extraction.loss_history
+    premiums   = extraction.prior_insurance
+
+    # Split by source trust level.
+    # If a loss run was submitted, use only its verified claims for all metrics.
+    # If no loss run exists, fall back to all available claims (best-effort).
+    verified_losses   = [l for l in all_losses if l.source_verified]
+    unverified_losses = [l for l in all_losses if not l.source_verified]
+    has_loss_run      = bool(verified_losses)
+    losses            = verified_losses if has_loss_run else all_losses
+
+    log.info("loss_source_split",
+        total=len(all_losses),
+        verified=len(verified_losses),
+        unverified=len(unverified_losses),
+        using=len(losses),
+        has_loss_run=has_loss_run,
+    )
 
     # ══════════════════════════════════════════════════
     # Step 1: Deduplicate claims by date → loss EVENTS
@@ -277,6 +293,8 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
     analytics["loss"] = {
         "total_events":          total_events,
         "total_claim_lines":     len(losses),
+        "unverified_claim_count": len(unverified_losses),
+        "has_loss_run":          has_loss_run,
         "total_incurred":        total_incurred,
         "incurred_source":       incurred_source,
         "total_paid":            total_paid,
@@ -499,8 +517,21 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         "far_fire_station":        far_fire_station,
     }
 
-    lines_requested = list(set(c.lob.strip().lower() for c in extraction.coverages if c.lob))
-    max_limit       = max((c.limit or 0 for c in extraction.coverages), default=0)
+    # Deduplicate LOBs with normalization — "Commercial Property" == "Property",
+    # "Commercial General Liability" == "General Liability", etc.
+    def _norm_lob(lob: str) -> str:
+        return lob.strip().lower().replace("commercial ", "").replace("_", " ").strip()
+
+    seen_lob_norm: set = set()
+    lines_requested: list = []
+    for c in extraction.coverages:
+        if c.lob:
+            norm = _norm_lob(c.lob)
+            if norm and norm not in seen_lob_norm:
+                seen_lob_norm.add(norm)
+                lines_requested.append(c.lob.strip())
+
+    max_limit = max((c.limit or 0 for c in extraction.coverages), default=0)
 
     analytics["coverage"] = {
         "lines_requested": lines_requested,
@@ -514,6 +545,8 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
         loss_ratio_ex_cat=analytics["loss"]["loss_ratio_ex_largest_pct"],
         total_events=total_events,
         total_claim_lines=len(losses),
+        unverified_claims=len(unverified_losses),
+        has_loss_run=has_loss_run,
         total_incurred=total_incurred,
         incurred_source=incurred_source,
         total_premium=total_premium,
