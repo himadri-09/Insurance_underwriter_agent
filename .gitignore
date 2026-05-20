@@ -16,3 +16,5 @@ insure311/
 # Output and test files
 output/
 parse_test.py
+
+run.log
