@@ -56,7 +56,7 @@ For ALL document types, extract into this schema where applicable:
 
 
 "company": { "name", "dba", "registration_number", "entity_type", "description", "naics_code", "sic_code", "industry", "website", "address", "city", "state", "zip_code", "phone", "email", "year_established", "years_in_business", "funding_stage", "annual_revenue", "headcount", "annual_payroll" },
-"locations": [{ "address", "city", "state", "zip_code", "building_value", "contents_value", "bi_value", "construction_type", "year_built", "stories", "square_footage", "sprinklered", "alarm_system", "occupancy", "protection_class", "roof_type", "roof_age", "flood_zone" }],
+"locations": [{ "address", "city", "state", "zip_code", "building_value", "contents_value", "bi_value", "construction_type", "year_built", "stories", "square_footage", "sprinklered", "alarm_system", "occupancy", "protection_class", "roof_type", "roof_age", "flood_zone", "vacancy_pct", "wiring_year", "plumbing_year", "roofing_year", "heating_year", "valuation_method", "causes_of_loss", "deductible_type", "coinsurance_pct", "bi_period_months", "distance_to_hydrant_ft", "fire_station_distance_mi", "historical_landmark" }],
 "coverages": [{ "lob", "coverage_type", "limit", "deductible", "aggregate_limit", "per_occurrence_limit", "prior_carrier", "prior_premium", "expiring_date", "effective_date" }],
 "prior_insurance": [{ "carrier", "policy_number", "lob", "effective_date", "expiration_date", "limits", "premium", "lapse_in_coverage", "cancelled_by_carrier", "reason_for_change" }],
 "loss_history": [{ "claim_number", "date_of_loss", "type", "lob", "description", "status", "amount_paid", "amount_reserved", "incurred", "subrogation", "carrier" }],
@@ -118,6 +118,11 @@ ACORD 140 (Property Section):
 - Protection class, occupancy, roof type/age
 - Values: building, contents, business income
 - Cause of loss form, coinsurance, valuation method
+- ALWAYS extract if present: wiring_year, plumbing_year, roofing_year, heating_year (renovation years)
+- ALWAYS extract: flood_zone (e.g. "X", "AE", "A"), vacancy_pct (0-100)
+- ALWAYS extract: historical_landmark (true/false) — check for any mention of "historic", "landmark", "preservation"
+- ALWAYS extract: distance_to_hydrant_ft, fire_station_distance_mi, coinsurance_pct, bi_period_months
+- alarm_system: extract as true/false only. If text says "Central Station", "Local Gong" etc → true
 """
 
 
@@ -541,15 +546,16 @@ class ExtractorAgent:
             except Exception:
                 pass
 
-        # Locations
+        # Locations — filter None so str fields use their "" default instead of failing validation
         for loc in raw.get("locations", []):
             if isinstance(loc, dict):
                 try:
                     result.locations.append(LocationInfo(**{
-                        k: v for k, v in loc.items() if k in LocationInfo.model_fields
+                        k: v for k, v in loc.items()
+                        if k in LocationInfo.model_fields and v is not None
                     }))
-                except Exception:
-                    pass
+                except Exception as e:
+                    log.warning("location_skipped", error=str(e))
 
         # Loss history
         for loss in raw.get("loss_history", []):
@@ -577,29 +583,32 @@ class ExtractorAgent:
             if isinstance(cov, dict):
                 try:
                     result.coverages.append(CoverageRequest(**{
-                        k: v for k, v in cov.items() if k in CoverageRequest.model_fields
+                        k: v for k, v in cov.items()
+                        if k in CoverageRequest.model_fields and v is not None
                     }))
-                except Exception:
-                    pass
+                except Exception as e:
+                    log.warning("coverage_skipped", error=str(e))
 
         # Prior insurance
         for pi in raw.get("prior_insurance", []):
             if isinstance(pi, dict):
                 try:
                     result.prior_insurance.append(PriorInsurance(**{
-                        k: v for k, v in pi.items() if k in PriorInsurance.model_fields
+                        k: v for k, v in pi.items()
+                        if k in PriorInsurance.model_fields and v is not None
                     }))
-                except Exception:
-                    pass
+                except Exception as e:
+                    log.warning("prior_insurance_skipped", error=str(e))
 
         # Legal
         if "legal" in raw and isinstance(raw["legal"], dict):
             try:
                 result.legal = LegalInfo(**{
-                    k: v for k, v in raw["legal"].items() if k in LegalInfo.model_fields
+                    k: v for k, v in raw["legal"].items()
+                    if k in LegalInfo.model_fields and v is not None
                 })
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("legal_skipped", error=str(e))
 
         # Broker notes
         result.broker_notes = raw.get("broker_notes", "").strip()
@@ -696,11 +705,14 @@ class ExtractorAgent:
             ExtractedField(field_name="full_extraction", value=raw, confidence=1.0, source_doc_id=doc_id)
         ]
 
-        # Missing fields
+        return result
+
+    def _compute_missing_fields(self, result: ExtractionResult) -> list:
         missing = []
         if not result.company.name:
             missing.append("company_name")
-        if not result.company.address:
+        has_address = bool(result.company.address) or any(loc.address for loc in result.locations)
+        if not has_address:
             missing.append("company_address")
         if not result.company.naics_code and not result.company.sic_code:
             missing.append("industry_classification")
@@ -714,9 +726,7 @@ class ExtractorAgent:
             missing.append("prior_insurance")
         if not result.company.description:
             missing.append("business_description")
-        result.missing_fields = missing
-
-        return result
+        return missing
 
 
     def _merge_form_data(self, extraction: ExtractionResult, form_data: dict):
@@ -750,10 +760,10 @@ class ExtractorAgent:
         state.status = "extracting"
         state.current_step = "extraction"
 
-        # Step 1: Parse all PDFs in parallel
+        # Step 1: Parse all documents (PDFs → fast/agentic, Excel → openpyxl)
         log.info("batch_extraction_starting", total_files=len(files))
         parsed = await self.parser.parse_batch(files)
-        log.info("batch_parse_complete", pdfs_parsed=len(parsed))
+        log.info("batch_parse_complete", docs_parsed=len(parsed))
 
         # Step 2: Build extraction tasks
         pdf_tasks = []
@@ -797,7 +807,10 @@ class ExtractorAgent:
         if state.form_data:
             self._merge_form_data(state.extraction, state.form_data)
 
-        # Step 6: Detect LOB
+        # Step 6: Recalculate missing fields after form data enrichment
+        state.extraction.missing_fields = self._compute_missing_fields(state.extraction)
+
+        # Step 8: Detect LOB
         if state.extraction.coverages:
             lob_str = (state.extraction.coverages[0].coverage_type or "").lower()
             lob_map = {

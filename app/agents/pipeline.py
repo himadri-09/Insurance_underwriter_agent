@@ -89,8 +89,9 @@ def _build_uw_facts(analytics: dict, rules_result: dict, extraction) -> dict:
     # Largest event
     largest_event = loss.get("largest_event") or {}
     largest_amount = largest_event.get("total_incurred", 0)
-    largest_type = largest_event.get("type", "unknown type")
-    largest_date = largest_event.get("date_normalized", "")
+    _types = largest_event.get("types", [])
+    largest_type = _types[0] if _types else "unknown type"
+    largest_date = largest_event.get("date", "")
  
     # Prior non-renewal — carriers that actually non-renewed
     non_renewal_carriers = carrier.get("non_renewal_carriers", [])
@@ -241,7 +242,7 @@ async def analyze_node(state: GraphState) -> GraphState:
         ps.scoring = SubmissionScoring(
             winnability_score=rules_result["winnability"],
             priority_score=rules_result["priority"],
-            referral_required=rules_result["status"] in ("refer", "decline"),
+            referral_required=rules_result["status"] in ("refer", "decline") or bool(rules_result.get("triggers")),
             referral_reasons=[
                 t["rule"] for t in rules_result["triggers"]
                 if t["severity"] in ("refer", "decline")

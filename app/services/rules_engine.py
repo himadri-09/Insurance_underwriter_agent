@@ -216,10 +216,64 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
 
     if prop.get("oldest_building_year") and (2026 - prop["oldest_building_year"]) > 40:
         age = 2026 - prop["oldest_building_year"]
+        if prop.get("has_recent_updates"):
+            renovation_yr = prop.get("most_recent_renovation", "")
+            positives.append({
+                "rule": "POSITIVE: Old building with documented system updates",
+                "detail": f"Built {prop['oldest_building_year']} ({age} yrs old) but systems updated as recently as {renovation_yr} — mitigates structural age concern.",
+            })
+        else:
+            triggers.append({
+                "rule": "REFER: Property older than 40 years",
+                "severity": "refer",
+                "detail": f"Oldest building: {prop['oldest_building_year']} ({age} years old). No documented system updates on file — requires senior review.",
+            })
+
+    if prop.get("any_acv_large_building"):
         triggers.append({
-            "rule": "REFER: Property older than 40 years",
+            "rule": "REFER: ACV valuation on large building",
             "severity": "refer",
-            "detail": f"Oldest building: {prop['oldest_building_year']} ({age} years old). Properties over 40 years require senior review for structural condition and update status.",
+            "detail": "One or more buildings over $5M insured at ACV (actual cash value). Depreciation gap creates significant underinsurance risk at time of loss — confirm RC valuation is not available.",
+        })
+
+    if prop.get("any_basic_causes_of_loss"):
+        triggers.append({
+            "rule": "FLAG: Basic causes-of-loss form",
+            "severity": "refer",
+            "detail": "Basic causes-of-loss excludes wind and water damage — confirm this is intentional given the property occupancy and location.",
+        })
+
+    if prop.get("any_high_vacancy"):
+        triggers.append({
+            "rule": "REFER: Vacancy exceeds 30%",
+            "severity": "refer",
+            "detail": "One or more locations reported vacancy above 30% threshold. Vacant space increases fire, vandalism, and liability exposure.",
+        })
+
+    if prop.get("low_coinsurance"):
+        triggers.append({
+            "rule": "FLAG: Coinsurance below 90%",
+            "severity": "refer",
+            "detail": "Coinsurance percentage below 90% — insured may face coinsurance penalty at partial loss if property is undervalued.",
+        })
+
+    if prop.get("far_fire_station"):
+        triggers.append({
+            "rule": "FLAG: Fire station distance exceeds 5 miles",
+            "severity": "refer",
+            "detail": "One or more locations are more than 5 miles from the nearest fire station — ISO response time factor increases property loss severity risk.",
+        })
+
+    if any(loc.historical_landmark for loc in extraction.locations if loc.historical_landmark):
+        triggers.append({
+            "rule": "REFER: Historical landmark property",
+            "severity": "refer",
+            "detail": (
+                "One or more locations is a designated historical landmark. "
+                "Restoration and repair must comply with preservation requirements, "
+                "limiting contractor choice and increasing replacement costs. "
+                "Standard RC valuation may be insufficient — senior UW review required."
+            ),
         })
 
     # ══════════════════════════════════════════════════
@@ -227,9 +281,10 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     # ══════════════════════════════════════════════════
 
     if loss_ratio_ex_cat is not None and loss_ratio_ex_cat < 30:
-        largest_type = largest_event.get("type", "largest claim") if largest_event else "largest claim"
+        _le_types    = (largest_event.get("types") or []) if largest_event else []
+        largest_type = _le_types[0] if _le_types else "largest claim"
         largest_amt  = largest_event.get("total_incurred", 0) if largest_event else 0
-        largest_date = largest_event.get("date_normalized", "") if largest_event else ""
+        largest_date = largest_event.get("date", "") if largest_event else ""
         overrides.append({
             "rule": "OVERRIDE: Excluding largest loss, ratio is excellent",
             "detail": (
@@ -391,6 +446,12 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     ):
         missing.append("No property details for property coverage request")
 
+    if extraction.locations:
+        if not any(loc.flood_zone for loc in extraction.locations if loc.flood_zone):
+            missing.append("Flood zone not provided — required for all property locations")
+        if any(loc.vacancy_pct is None for loc in extraction.locations):
+            missing.append("Vacancy percentage missing for one or more locations")
+
     # ══════════════════════════════════════════════════
     # MITIGATION-WEIGHTED DECISIONING
     # ══════════════════════════════════════════════════
@@ -460,9 +521,14 @@ def evaluate_rules(analytics: dict, extraction: ExtractionResult) -> dict:
     elif refer_triggers:
         override_count = len(overrides)
         refer_count    = len(refer_triggers)
-        if override_count >= refer_count and not any(
-            "non-renewal" in t["rule"].lower() for t in refer_triggers
-        ):
+        # Authority-based triggers cannot be overridden by risk mitigations —
+        # they require senior UW sign-off regardless of how good the risk looks.
+        hard_refer_keywords = ("limit exceeds", "historical landmark", "non-renewal")
+        has_hard_refer = any(
+            any(kw in t["rule"].lower() for kw in hard_refer_keywords)
+            for t in refer_triggers
+        )
+        if override_count >= refer_count and not has_hard_refer:
             score = 4
             status = "accept"
             reasoning = "Referral triggers present but fully overridden by mitigating factors"

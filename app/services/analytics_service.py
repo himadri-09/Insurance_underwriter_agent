@@ -393,9 +393,10 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
 # Threshold: same cause 3+ times, OR same cause 2+ times AND dominates (>60% of all events).
 
     total_typed = len(causation_types)
+    # "other" is a catch-all — two different unclassified perils are NOT systemic
     systemic = any(
-        c >= 3 or (c >= 2 and c / max(total_typed, 1) > 0.60)
-        for c in type_counts.values()
+        ct != "other" and (c >= 3 or (c >= 2 and c / max(total_typed, 1) > 0.60))
+        for ct, c in type_counts.items()
     )
 
     analytics["causation"] = {
@@ -471,15 +472,34 @@ def compute_analytics(extraction: ExtractionResult) -> dict:
     unsprinklered_count = len(locations) - sprinklered_count
     oldest_building     = min((loc.year_built for loc in locations if loc.year_built), default=None)
 
+    most_recent_renovation = None
+    for loc in locations:
+        for yr in (loc.wiring_year, loc.plumbing_year, loc.roofing_year, loc.heating_year):
+            if yr and (most_recent_renovation is None or yr > most_recent_renovation):
+                most_recent_renovation = yr
+
+    any_acv            = any(loc.valuation_method.upper() == "ACV" and (loc.building_value or 0) > 5_000_000 for loc in locations)
+    any_basic_col      = any("basic" in loc.causes_of_loss.lower() for loc in locations if loc.causes_of_loss)
+    any_high_vacancy   = any((loc.vacancy_pct or 0) > 30 for loc in locations)
+    low_coinsurance    = any((loc.coinsurance_pct or 100) < 90 for loc in locations if loc.coinsurance_pct)
+    far_fire_station   = any((loc.fire_station_distance_mi or 0) > 5 for loc in locations if loc.fire_station_distance_mi)
+
     analytics["property"] = {
-        "location_count":      len(locations),
-        "total_tiv":           total_tiv,
-        "sprinklered_count":   sprinklered_count,
-        "unsprinklered_count": unsprinklered_count,
-        "oldest_building_year": oldest_building,
+        "location_count":          len(locations),
+        "total_tiv":               total_tiv,
+        "sprinklered_count":       sprinklered_count,
+        "unsprinklered_count":     unsprinklered_count,
+        "oldest_building_year":    oldest_building,
+        "most_recent_renovation":  most_recent_renovation,
+        "has_recent_updates":      most_recent_renovation is not None and most_recent_renovation >= 2010,
+        "any_acv_large_building":  any_acv,
+        "any_basic_causes_of_loss": any_basic_col,
+        "any_high_vacancy":        any_high_vacancy,
+        "low_coinsurance":         low_coinsurance,
+        "far_fire_station":        far_fire_station,
     }
 
-    lines_requested = list(set(c.lob for c in extraction.coverages if c.lob))
+    lines_requested = list(set(c.lob.strip().lower() for c in extraction.coverages if c.lob))
     max_limit       = max((c.limit or 0 for c in extraction.coverages), default=0)
 
     analytics["coverage"] = {

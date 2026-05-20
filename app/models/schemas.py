@@ -97,14 +97,33 @@ class LocationInfo(BaseModel):
     construction_type: str = ""
     year_built: Optional[int] = None
     stories: Optional[int] = None
+    basements: Optional[int] = None
     square_footage: Optional[int] = None
     sprinklered: Optional[bool] = None
     alarm_system: Optional[bool] = None
     occupancy: str = ""
+    vacancy_pct: Optional[int] = None
     protection_class: str = ""
     roof_type: str = ""
     roof_age: Optional[int] = None
     flood_zone: str = ""
+    # Renovation years — used to override the 40-year building age trigger
+    wiring_year: Optional[int] = None
+    plumbing_year: Optional[int] = None
+    roofing_year: Optional[int] = None
+    heating_year: Optional[int] = None
+    # Additional ACORD 140 fields for underwriting
+    valuation_method: str = ""          # RC (replacement cost) or ACV
+    causes_of_loss: str = ""            # Special / Broad / Basic
+    deductible_type: str = ""           # AOP, Named Storm, Wind/Hail
+    coinsurance_pct: Optional[int] = None
+    bi_period_months: Optional[int] = None
+    inflation_guard_pct: Optional[int] = None
+    building_code_grade: str = ""
+    distance_to_hydrant_ft: Optional[int] = None
+    fire_station_distance_mi: Optional[float] = None
+    wind_class: str = ""
+    historical_landmark: Optional[bool] = None
 
 
 # ── Loss ─────────────────────────────────────────────

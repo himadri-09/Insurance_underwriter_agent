@@ -82,7 +82,24 @@ Return JSON with these fields (use null for missing values, do not guess):
       "protection_class": "",
       "roof_type": "",
       "roof_age": null,
-      "flood_zone": ""
+      "flood_zone": "",
+      "wiring_year": null,
+      "plumbing_year": null,
+      "roofing_year": null,
+      "heating_year": null,
+      "basements": null,
+      "vacancy_pct": null,
+      "valuation_method": "",
+      "causes_of_loss": "",
+      "deductible_type": "",
+      "coinsurance_pct": null,
+      "bi_period_months": null,
+      "inflation_guard_pct": null,
+      "building_code_grade": "",
+      "distance_to_hydrant_ft": null,
+      "fire_station_distance_mi": null,
+      "wind_class": "",
+      "historical_landmark": null
     }
   ],
   "coverages": [
@@ -308,7 +325,12 @@ Apply these rules to every submission. These are your decision criteria.
 - Lapse in prior coverage exceeding 60 days
 - Prior policy non-renewed by carrier
 - Business in higher-hazard class (restaurants, construction, manufacturing, auto repair)
-- Property older than 40 years without updates to roof/electrical/plumbing
+- Property older than 40 years without documented updates to roof/electrical/plumbing (wiring_year, roofing_year, plumbing_year, heating_year). If updates ARE present and recent (≥2010), convert to a positive instead.
+- ACV valuation on any building over $5M (valuation_method = "ACV") — depreciation gap = underinsurance risk
+- Causes-of-loss = "Basic" — excludes wind/water, flag for occupancy mismatch
+- Vacancy at any location > 30% (vacancy_pct)
+- Coinsurance below 90% (coinsurance_pct) — penalty risk at partial loss
+- Fire station distance > 5 miles (fire_station_distance_mi)
 - Multi-state operations (regulatory complexity)
 - Startup less than 2 years old
 - Any open Workers Comp claims with reserves exceeding $100K
@@ -590,6 +612,9 @@ CRITICAL RULES:
 4. Use the REQUESTED effective date from the broker submission or form data, not the current/expiring policy date.
 5. If risk improvements are mentioned in broker notes or extracted data, include them under "Risk Improvements".
 6. Do not contradict the data — if claims are extracted, they were provided.
-7. If the broker submission describes this as a renewal, rate check, or incumbent marketing,
-   open the Snapshot with that context: e.g. "Flat incumbent renewal submitted for competitive pricing."
-   Do not frame it as a fresh binding decision when the broker has stated otherwise."""
+7. ONLY IF the broker submission explicitly uses words like "renewal", "rate check", "incumbent", or
+   "re-marketing" — open the Snapshot with that context (e.g. "Flat incumbent renewal submitted for
+   competitive pricing."). If the documents do NOT explicitly state this, open with a neutral factual
+   summary instead. Never assume or infer renewal context that is not stated in the source documents.
+8. Do NOT include a "Broker Follow-up Questions" or "Broker Follow-ups" section — these are rendered
+   separately in the UI. Omit them entirely from the brief."""
