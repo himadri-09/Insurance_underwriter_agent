@@ -18,3 +18,4 @@ output/
 parse_test.py
 
 run.log
+*.log
